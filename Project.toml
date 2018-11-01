@@ -1,0 +1,7 @@
+name = "BioSemiBDF"
+uuid = "d1c37e40-cd17-11e8-241b-47481c954d91"
+authors = ["igmmgi <ian.mackenzie@uni-tuebingen.de>"]
+version = "0.1.0"
+
+[deps]
+StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
