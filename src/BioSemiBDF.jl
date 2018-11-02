@@ -31,108 +31,10 @@ module BioSemiBDF
   dat1 = read_bdf("filename1.bdf")
   dat2 = read_bdf("filename2.bdf")
   dat3 = merge_bdf([dat1, dat2], "filename3.bdf")
+  write_bdf(dat3)
   ```
   """
-  function read_header(filename::AbstractString)
-
-    fid = open(filename, "r")
-
-    # header fields
-    id1 = read!(fid, Array{UInt8}(undef, 1))
-    id2 = ascii(String(read!(fid, Array{UInt8}(undef, 7))))
-    text1 = ascii(String(read!(fid, Array{UInt8}(undef, 80))))
-    text2 = ascii(String(read!(fid, Array{UInt8}(undef, 80))))
-    start_date = ascii(String(read!(fid, Array{UInt8}(undef, 8))))
-    start_time = ascii(String(read!(fid, Array{UInt8}(undef, 8))))
-    num_bytes_header = parse(Int, strip(ascii(String(read!(fid, Array{UInt8}(undef, 8))))))
-    data_format = strip(ascii(String(read!(fid, Array{UInt8}(undef, 44)))))
-    num_data_records = parse(Int, strip(ascii(String(read!(fid, Array{UInt8}(undef, 8))))))
-    duration_data_records = parse(Int, ascii(String(read!(fid, Array{UInt8}(undef, 8)))))
-    num_channels = parse(Int, ascii(String(read!(fid, Array{UInt8}(undef, 4)))))
-
-    channel_labels = Array{String}(undef, num_channels)
-    transducer_type = Array{String}(undef, num_channels)
-    channel_unit = Array{String}(undef, num_channels)
-    physical_min = Array{Int32}(undef, num_channels)
-    physical_max = Array{Int32}(undef, num_channels)
-    digital_min = Array{Int32}(undef, num_channels)
-    digital_max = Array{Int32}(undef, num_channels)
-    pre_filter = Array{String}(undef, num_channels)
-    num_samples = Array{Int}(undef, num_channels)
-    reserved = Array{String}(undef, num_channels)
-    scale_factor = Array{Float32}(undef, num_channels)
-    sample_rate = Array{Int}(undef, num_channels)
-
-    # read header information
-    for i = 1:num_channels
-      channel_labels[i] = strip(ascii(String(read!(fid, Array{UInt8}(undef, 16)))))
-    end
-    for i = 1:num_channels
-      transducer_type[i] = strip(ascii(String(read!(fid, Array{UInt8}(undef, 80)))))
-    end
-    for i = 1:num_channels
-      channel_unit[i] = strip(ascii(String(read!(fid, Array{UInt8}(undef, 8)))))
-    end
-    for i = 1:num_channels
-      physical_min[i] = parse(Int, strip(ascii(String(read!(fid, Array{UInt8}(undef, 8))))))
-    end
-    for i = 1:num_channels
-      physical_max[i] = parse(Int, strip(ascii(String(read!(fid, Array{UInt8}(undef, 8))))))
-    end
-    for i = 1:num_channels
-      digital_min[i] = parse(Int, strip(ascii(String(read!(fid, Array{UInt8}(undef, 8))))))
-    end
-    for i = 1:num_channels
-      digital_max[i] = parse(Int, strip(ascii(String(read!(fid, Array{UInt8}(undef, 8))))))
-    end
-    for i = 1:num_channels
-      pre_filter[i] = strip(ascii(String(read!(fid, Array{UInt8}(undef, 80)))))
-    end
-    for i = 1:num_channels
-      num_samples[i] = parse(Int, ascii(String(read!(fid, Array{UInt8}(undef, 8)))))
-    end
-    for i = 1:num_channels
-      reserved[i] = strip(ascii(String(read!(fid, Array{UInt8}(undef, 32)))))
-    end
-    for i = 1:num_channels
-      scale_factor[i] = Float32(physical_max[i]-physical_min[i])/ (digital_max[i]-digital_min[i])
-      sample_rate[i] = num_samples[i]/duration_data_records
-    end
-    close(fid)
-
-    # create header dictionary
-    header = Dict{String, Any}(
-    "filename" => filename,
-    "id1" => id1,
-    "id2" => id2,
-    "text1" => text1,
-    "text2" => text2,
-    "start_date" => start_date,
-    "start_time" => start_time,
-    "num_bytes_header" => num_bytes_header,
-    "data_format" => data_format,
-    "num_data_records" => num_data_records,
-    "duration_data_records" => duration_data_records,
-    "num_channels" => num_channels,
-    "channel_labels" => channel_labels,
-    "transducer_type" => transducer_type,
-    "channel_unit" => channel_unit,
-    "physical_min" => physical_min,
-    "physical_max" => physical_max,
-    "digital_min" => digital_min,
-    "digital_max" => digital_max,
-    "pre_filter" => pre_filter,
-    "num_samples" => num_samples,
-    "reserved" => reserved,
-    "scale_factor" => scale_factor,
-    "sample_rate" => sample_rate
-    )
-
-    return header
-
-  end
-
-  function read_bdf(filename::AbstractString; channels = Array{Any}[])
+  function read_bdf(filename::AbstractString; header_only::Bool = false, channels = Array{Any}[])
 
     fid = open(filename, "r")
 
@@ -225,6 +127,7 @@ module BioSemiBDF
     "scale_factor" => scale_factor,
     "sample_rate" => sample_rate
     )
+    if header_only, return header end
 
     # read data
     bdf = read!(fid, Array{UInt8}(undef, 3*(num_data_records*num_channels*num_samples[1])))
