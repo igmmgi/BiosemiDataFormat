@@ -4,7 +4,7 @@ module BioSemiBDF
 
   export BioSemiRawData, read_bdf, merge_bdf, write_bdf, channel_idx
 
-  struct BioSemiRawData
+  mutable struct BioSemiRawData
     header::Dict
     data::Matrix
     labels::Array
@@ -127,7 +127,9 @@ module BioSemiBDF
     "scale_factor" => scale_factor,
     "sample_rate" => sample_rate
     )
-    if header_only, return header end
+    if header_only
+      return header
+    end
 
     # read data
     bdf = read!(fid, Array{UInt8}(undef, 3*(num_data_records*num_channels*num_samples[1])))
