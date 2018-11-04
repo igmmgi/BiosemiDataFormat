@@ -171,7 +171,7 @@ module BioSemiBDF
     end
 
     # time
-    time = collect(0:size(dat_chans, 2)) / sample_rate[1]
+    time = collect(0:size(dat_chans, 2) - 1) / sample_rate[1]
 
     # events
     trig_idx = findall(diff(trig_chan) .>= 1) .+ 1
@@ -346,16 +346,14 @@ module BioSemiBDF
       error("Different sample rate in bdf_in")
     end
 
-    # copy header
-    header = copy(bdf_in[1].header)
-    header["filename"] = filename_out
-    header["num_data_records"] = sum((x -> x.header["num_data_records"]).(bdf_in))
+    bdf_in[1].header["filename"] = filename_out
+    bdf_in[1].header["num_data_records"] = sum((x -> x.header["num_data_records"]).(bdf_in))
 
     # merged dat_chan Matcix (channels x samples)
     dat_chans = hcat((x -> x.data).(bdf_in)...)
 
     # merged time array
-    time = collect(0:size(dat_chans, 2)) / header["sample_rate"][1]
+    time = collect(0:size(dat_chans, 2) -1) / bdf_in[1].header["sample_rate"][1]
 
     # merged triggers dict
     triggers = copy(bdf_in[1].triggers)
@@ -370,7 +368,7 @@ module BioSemiBDF
     # merged status array
     status = vcat((x -> x.status).(bdf_in)...)
 
-    return BioSemiRawData(header, dat_chans, time, triggers, status)
+    return BioSemiRawData(bdf_in[1].header, dat_chans, bdf_in[1].labels, time, triggers, status)
 
   end
 
