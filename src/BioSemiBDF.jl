@@ -326,52 +326,90 @@ module BioSemiBDF
     input BioSemiRaw structs have the same number of channels, same channel
     labels and that each channel has the same sample rate.
   """
-  function merge_bdf(bdf_in::Array{BioSemiRawData}, filename_out::AbstractString)
+   function merge_bdf(bdf_in::Array{BioSemiRawData}, filename_out::AbstractString)
+#
+     # check data structs to merge have same number of channels
+     num_chans = (x -> x.header["num_channels"]).(bdf_in)
+     if !all(x -> x == num_chans[1], num_chans)
+       error("Different number of channels in bdf_in")
+     end
+#
+     # check data structs to merge have same channel labels
+     chan_labels = (x -> x.header["channel_labels"]).(bdf_in)
+     if !all(y -> y == chan_labels[1], chan_labels)
+       error("Different channel labels bdf_in")
+     end
+#
+     # check data structs to merge have same sample rate
+     sample_rate = (x -> x.header["sample_rate"]).(bdf_in)
+     if !all(y -> y == sample_rate[1], sample_rate)
+       error("Different sample rate in bdf_in")
+     end
+#
+    # make deep copy so that bdf_in is not altered
+     bdf_out = deepcopy(bdf_in[1])
+     bdf_out.header["filename"] = filename_out
+     bdf_out.header["num_data_records"] = sum((x -> x.header["num_data_records"]).(bdf_in))
+#
+     # merged dat_chan Matrix (channels x samples)
+     bdf_out.data = hcat((x -> x.data).(bdf_in)...)
+#
+     # merged time ans status array
+     bdf_out.time = collect(0:size(bdf_out.data, 2) -1) / bdf_in[1].header["sample_rate"][1]
+     bdf_out.status = vcat((x -> x.status).(bdf_in)...)
 
-    # check data structs to merge have same number of channels
-    num_chans = (x -> x.header["num_channels"]).(bdf_in)
-    if !all(x -> x == num_chans[1], num_chans)
-      error("Different number of channels in bdf_in")
+     # merged triggers dict with offset idx
+     for bdf in bdf_in[2:end]
+       idx_offset = size(bdf.data, 2)
+       bdf_out.triggers["idx"] = vcat(bdf_out.triggers["idx"], bdf.triggers["idx"] .+ idx_offset)
+     end
+     bdf_out.triggers["raw"] = vcat((x -> x.triggers["raw"]).(bdf_in)...)
+     bdf_out.triggers["val"] = vcat((x -> x.triggers["val"]).(bdf_in)...)
+     bdf_out.triggers["count"] = sort(countmap(bdf_out.triggers["val"]))
+#
+     return bdf_out
+#
+   end
+
+  function crop_bdf(bdf_in::BioSemiRawData, type::AbstractString, values::Array{Int})
+    if type == "triggers"
+      # find trigger index
+      if values[1] != nothing
+        loc1 = findfirst(x -> x == values[1], bdf_in.triggers["val"])
+      else
+        loc = 1
+      end
+      if values[2] != nothing
+        loc2 = findfirst(x -> x == values[2], bdf_in.triggers["val"])
+      else
+        loc2 = length(bdf_in.triggers["val"])
+      end
+      idx1 = bdf_in.triggers["idx"][loc1]
+      idx2 = bdf_in.triggers["idx"][loc2]
+
+      # select data
+      bdf_in.data = bdf_in.data[:, idx1:idx2]
+
+      # update triggers
+      bdf_in.triggers["idx"] = bdf_in.triggers["idx"][idx1:idx2]
+      bdf_in.triggers["raw"] = bdf_in.triggers["raw"][idx1:idx2]
+      bdf_in.triggers["val"] = bdf_in.triggers["val"][idx1:idx2]
+      bdf_in.triggers["count"] = sort(countmap(bdf_in.triggers["val"]))
+
+    elseif type == "records"
+    elseif type == "time"
+    else
+      error("Crop type not recognized!")
     end
 
-    # check data structs to merge have same channel labels
-    chan_labels = (x -> x.header["channel_labels"]).(bdf_in)
-    if !all(y -> y == chan_labels[1], chan_labels)
-      error("Different channel labels bdf_in")
-    end
 
-    # check data structs to merge have same sample rate
-    sample_rate = (x -> x.header["sample_rate"]).(bdf_in)
-    if !all(y -> y == sample_rate[1], sample_rate)
-      error("Different sample rate in bdf_in")
-    end
-
-    bdf_in[1].header["filename"] = filename_out
-    bdf_in[1].header["num_data_records"] = sum((x -> x.header["num_data_records"]).(bdf_in))
-
-    # merged dat_chan Matcix (channels x samples)
-    dat_chans = hcat((x -> x.data).(bdf_in)...)
-
-    # merged time array
-    time = collect(0:size(dat_chans, 2) -1) / bdf_in[1].header["sample_rate"][1]
-
-    # merged triggers dict
-    triggers = copy(bdf_in[1].triggers)
-    for bdf in bdf_in[2:end]
-      idx_offset = size(bdf.data, 2)
-      triggers["idx"] = vcat(triggers["idx"], bdf.triggers["idx"] .+ idx_offset)
-    end
-    triggers["raw"] = vcat((x -> x.triggers["raw"]).(bdf_in)...)
-    triggers["val"] = vcat((x -> x.triggers["val"]).(bdf_in)...)
-    triggers["count"] = sort(countmap(triggers["val"] ))
-
-    # merged status array
-    status = vcat((x -> x.status).(bdf_in)...)
-
-    return BioSemiRawData(bdf_in[1].header, dat_chans, bdf_in[1].labels, time, triggers, status)
 
   end
 
+  function downsample_bdf(bdf_in::BioSemiRawData)
+  end
+
+  ##############################################################################
   function channel_idx(labels_in::Array{String}, num_in::Int64, channels::Array{String})
     channels = [findfirst(x -> x == y, labels_in) for y in channels]
     if any(x -> x == nothing, channels)
