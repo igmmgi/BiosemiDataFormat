@@ -22,7 +22,7 @@ using Test
     # triggers
     @test isequal(dat.triggers["idx"][1], 415)
     @test isequal(dat.triggers["val"][1], 255)
-    @test isequal(dat.triggers["count"][1], 40)
+    @test isequal(dat.triggers["count"][255], 40)
 
 end
 
@@ -48,6 +48,6 @@ end
     # triggers
     @test isequal(dat.triggers["idx"][1], 3353)
     @test isequal(dat.triggers["val"][1], 255)
-    @test isequal(dat.triggers["count"][1], 39)
+    @test isequal(dat.triggers["count"][255], 39)
 
 end
