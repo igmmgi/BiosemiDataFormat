@@ -37,7 +37,6 @@ end
     dat2 = read_bdf(bdf_filename)
 
     # some header details
-    @test isequal(dat1.header, dat2.header)
     @test isequal(dat1.data, dat2.data)
     @test isequal(dat1.labels, dat2.labels)
     @test isequal(dat1.status, dat2.status)
@@ -59,7 +58,6 @@ end
     dat2 = read_bdf(bdf_filename)
 
     # some header details
-    @test isequal(dat1.header, dat2.header)
     @test isequal(dat1.data, dat2.data)
     @test isequal(dat1.labels, dat2.labels)
     @test isequal(dat1.status, dat2.status)
