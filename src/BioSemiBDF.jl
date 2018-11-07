@@ -1,8 +1,8 @@
 module BioSemiBDF
 
-  using StatsBase
+  using StatsBase, DSP
 
-  export BioSemiRawData, read_bdf, merge_bdf, write_bdf, channel_idx
+  export read_bdf, merge_bdf, write_bdf, crop_bdf, downsample_bdf
 
   mutable struct BioSemiRawData
     header::Dict
@@ -14,13 +14,14 @@ module BioSemiBDF
   end
 
   """
-  read_bdf(filename)
-  Reads BioSemi Data Format (*bdf) files.
+  function read_bdf(filename::AbstractString; header_only::Bool = false, channels = Array{Any}[])
+
+  Reads BioSemi Data Format (bdf) files.
   See https://www.biosemi.com/faq_file_format.htm for file format details.
   ### Inputs:
   * filename
   ### Outputs:
-  * bioSemiRaw struct with the following fields
+  * BioSemiRawData struct with the following fields
   * header Dict
   * data (channels * samples) Matrix
   * time
@@ -29,8 +30,6 @@ module BioSemiBDF
   ### Examples:
   ```julia
   dat1 = read_bdf("filename1.bdf")
-  dat2 = read_bdf("filename2.bdf")
-  dat3 = merge_bdf([dat1, dat2], "filename3.bdf")
   write_bdf(dat3)
   ```
   """
@@ -136,7 +135,7 @@ module BioSemiBDF
     close(fid)
 
     if !isempty(channels)  # specific channel labels/numbers given
-      channels = channel_idx(header["channel_labels"], header["num_channels"], channels)
+      channels = channel_idx(header["channel_labels"], channels)
     else
       channels = 1:num_channels
     end
@@ -179,10 +178,10 @@ module BioSemiBDF
 
     # create triggers dictionary
     triggers = Dict{String, Any}(
-    "raw" => trig_chan,
     "idx" => trig_idx,
     "val" => trig_val,
-    "count" => sort(countmap(trig_val))
+    "count" => sort(countmap(trig_val)),
+    "time" => hcat(trig_val, pushfirst!(diff(trig_idx), 0) / header["sample_rate"][1])
     )
 
     return BioSemiRawData(header, dat_chans, labels, time, triggers, status_chan)
@@ -190,7 +189,18 @@ module BioSemiBDF
   end
 
   """
+  function write_bdf(bdf_in::BioSemiRawData)
+
   Write BioSemiRaw structs to *.bdf file.
+  See https://www.biosemi.com/faq_file_format.htm for file format details.
+
+  ### Inputs:
+  * BioSemiRawData struct
+
+  ### Examples:
+  ```julia
+  dat1 = read_bdf("filename1.bdf")
+  write_bdf(dat1)
   """
   function write_bdf(bdf_in::BioSemiRawData)
 
@@ -322,111 +332,181 @@ module BioSemiBDF
   end
 
   """
-  Merge BioSemiRaw structs to single BioSemiRaw struct. Current checks that the
+  Merge BioSemiRaw structs to single BioSemiRaw struct. Checks that the
     input BioSemiRaw structs have the same number of channels, same channel
     labels and that each channel has the same sample rate.
-  """
-   function merge_bdf(bdf_in::Array{BioSemiRawData}, filename_out::AbstractString)
-#
-     # check data structs to merge have same number of channels
-     num_chans = (x -> x.header["num_channels"]).(bdf_in)
-     if !all(x -> x == num_chans[1], num_chans)
-       error("Different number of channels in bdf_in")
-     end
-#
-     # check data structs to merge have same channel labels
-     chan_labels = (x -> x.header["channel_labels"]).(bdf_in)
-     if !all(y -> y == chan_labels[1], chan_labels)
-       error("Different channel labels bdf_in")
-     end
-#
-     # check data structs to merge have same sample rate
-     sample_rate = (x -> x.header["sample_rate"]).(bdf_in)
-     if !all(y -> y == sample_rate[1], sample_rate)
-       error("Different sample rate in bdf_in")
-     end
-#
-    # make deep copy so that bdf_in is not altered
-     bdf_out = deepcopy(bdf_in[1])
-     bdf_out.header["filename"] = filename_out
-     bdf_out.header["num_data_records"] = sum((x -> x.header["num_data_records"]).(bdf_in))
-#
-     # merged dat_chan Matrix (channels x samples)
-     bdf_out.data = hcat((x -> x.data).(bdf_in)...)
-#
-     # merged time ans status array
-     bdf_out.time = collect(0:size(bdf_out.data, 2) -1) / bdf_in[1].header["sample_rate"][1]
-     bdf_out.status = vcat((x -> x.status).(bdf_in)...)
 
-     # merged triggers dict with offset idx
-     for bdf in bdf_in[2:end]
-       idx_offset = size(bdf.data, 2)
-       bdf_out.triggers["idx"] = vcat(bdf_out.triggers["idx"], bdf.triggers["idx"] .+ idx_offset)
+  ### Examples:
+  ```julia
+  dat1 = read_bdf("filename1.bdf")
+  dat2 = read_bdf("filename2.bdf")
+  dat3 = merge_bdf([dat1, dat2], "filename3.bdf")
+  write_bdf(dat3)
+  ```
+  """
+  function merge_bdf(bdf_in::Array{BioSemiRawData}, filename_out::AbstractString)
+
+    # check data structs to merge have same number of channels
+    num_chans = (x -> x.header["num_channels"]).(bdf_in)
+    if !all(x -> x == num_chans[1], num_chans)
+     error("Different number of channels in bdf_in")
+    end
+
+    # check data structs to merge have same channel labels
+    chan_labels = (x -> x.header["channel_labels"]).(bdf_in)
+    if !all(y -> y == chan_labels[1], chan_labels)
+     error("Different channel labels bdf_in")
+    end
+
+    # check data structs to merge have same sample rate
+    sample_rate = (x -> x.header["sample_rate"]).(bdf_in)
+    if !all(y -> y == sample_rate[1], sample_rate)
+     error("Different sample rate in bdf_in")
+    end
+
+    # make copy so that bdf_in is not altered
+    bdf_out = deepcopy(bdf_in[1])
+    bdf_out.header["filename"] = filename_out
+    bdf_out.header["num_data_records"] = sum((x -> x.header["num_data_records"]).(bdf_in))
+
+    # merged dat_chan Matrix (channels x samples)
+    bdf_out.data = hcat((x -> x.data).(bdf_in)...)
+
+    # merged time ans status array
+    bdf_out.time = collect(0:size(bdf_out.data, 2) -1) / bdf_in[1].header["sample_rate"][1]
+    bdf_out.status = vcat((x -> x.status).(bdf_in)...)
+
+    # merged triggers dict with offset idx
+    for bdf in bdf_in[2:end]
+     idx_offset = size(bdf.data, 2)
+     bdf_out.triggers["idx"] = vcat(bdf_out.triggers["idx"], bdf.triggers["idx"] .+ idx_offset)
+    end
+    bdf_out.triggers["raw"] = vcat((x -> x.triggers["raw"]).(bdf_in)...)
+    bdf_out.triggers["val"] = vcat((x -> x.triggers["val"]).(bdf_in)...)
+    bdf_out.triggers["count"] = sort(countmap(bdf_out.triggers["val"]))
+
+    return bdf_out
+
+  end
+
+   """
+   function crop_bdf(bdf_in::BioSemiRawData, crop_type::AbstractString, val::Array{Int}, filename_out::AbstractString)
+
+   Recuce the length of the recorded data. The borded upon which to crop the bdf file can be defined using either
+   a start and end trigger ("triggers") or a start and end record ("records").
+
+   ### Examples:
+   ```julia
+   dat1 = read_bdf("filename1.bdf")
+   dat2 = crop_bdf(dat1, "triggers", [1 2])  # between first trigger 1 and last trigger 2
+   dat3 = crop_bdf(dat1, "records", [1 100]) # data records 1 to 100 inclusive
+   ```
+   """
+   function crop_bdf(bdf_in::BioSemiRawData, crop_type::AbstractString, val::Array{Int}, filename_out::AbstractString)
+
+     if length(val) != 2
+       error("val should be of length 2")
      end
-     bdf_out.triggers["raw"] = vcat((x -> x.triggers["raw"]).(bdf_in)...)
-     bdf_out.triggers["val"] = vcat((x -> x.triggers["val"]).(bdf_in)...)
+
+     sample_rate = bdf_in.header["sample_rate"][1]
+     if crop_type == "triggers"
+
+       # find trigger value index
+       trigStart = findfirst(x -> x == val[1], bdf_in.triggers["val"])
+       trigEnd = findlast(x -> x == val[2], bdf_in.triggers["val"])
+       idxStart = bdf_in.triggers["idx"][trigStart]
+       idxEnd = bdf_in.triggers["idx"][trigEnd]
+
+       # need to find boundardy equal to record breaks
+       borders = collect(1:sample_rate:size(bdf_in.data)[2])
+       idxStart =  findlast(x -> x  <= idxStart, borders) * sample_rate
+       idxEnd   = (findfirst(x -> x >= idxEnd,   borders) * sample_rate) - 1
+
+     elseif crop_type == "records"
+
+       idxStart = ((val[1]-1) * sample_rate) + 1
+       idxEnd   =  (val[2]    * sample_rate)
+
+       # find trigger value index
+       trigStart = findfirst(x -> x >= idxStart, bdf_in.triggers["idx"])
+       trigEnd   = findlast(x ->  x <= idxEnd,   bdf_in.triggers["idx"])
+
+     else
+       error("crop_type not recognized!")
+     end
+
+     # copy data and crop
+     bdf_out = deepcopy(bdf_in)
+     bdf_out.header["filename"] = filename_out
+     bdf_out.header["num_data_records"] = (idxEnd - idxStart) * sample_rate
+     bdf_out.data = bdf_out.data[:, idxStart:idxEnd]
+     bdf_out.time = collect(0:size(bdf_out.data, 2) -1) / bdf_in[1].header["sample_rate"][1]
+
+     # update triggers
+     bdf_out.triggers["idx"] = bdf_out.triggers["idx"][trigStart:trigEnd]
+     bdf_out.triggers["raw"] = bdf_out.triggers["raw"][idxStart:idxEnd]
+     bdf_out.triggers["val"] = bdf_out.triggers["val"][trigStart:trigEnd]
      bdf_out.triggers["count"] = sort(countmap(bdf_out.triggers["val"]))
-#
+
      return bdf_out
-#
+
    end
 
-  function crop_bdf(bdf_in::BioSemiRawData, type::AbstractString, values::Array{Int})
-    if type == "triggers"
-      # find trigger index
-      if values[1] != nothing
-        loc1 = findfirst(x -> x == values[1], bdf_in.triggers["val"])
-      else
-        loc = 1
-      end
-      if values[2] != nothing
-        loc2 = findfirst(x -> x == values[2], bdf_in.triggers["val"])
-      else
-        loc2 = length(bdf_in.triggers["val"])
-      end
-      idx1 = bdf_in.triggers["idx"][loc1]
-      idx2 = bdf_in.triggers["idx"][loc2]
+   """
+   function downsample_bdf(bdf_in::BioSemiRawData, dec_factor::Int64)
+   Reduce the sampling rate within a BioSemiRawData struct by an integer factor (dec_factor).
 
-      # select data
-      bdf_in.data = bdf_in.data[:, idx1:idx2]
+   ### Examples:
+   ```julia
+   dat1 = read_bdf("filename1.bdf")
+   dat2 = downsample_bdf(dat1, 2)
+   ```
+   """
+   # TO DO: mirror data/subtract channel mean to avoid edge artifacts
+   function downsample_bdf(bdf_in::BioSemiRawData, dec_factor::Int64)
 
-      # update triggers
-      bdf_in.triggers["idx"] = bdf_in.triggers["idx"][idx1:idx2]
-      bdf_in.triggers["raw"] = bdf_in.triggers["raw"][idx1:idx2]
-      bdf_in.triggers["val"] = bdf_in.triggers["val"][idx1:idx2]
-      bdf_in.triggers["count"] = sort(countmap(bdf_in.triggers["val"]))
+     bdf_out = deepcopy(bdf_in)
 
-    elseif type == "records"
-    elseif type == "time"
-    else
-      error("Crop type not recognized!")
-    end
+     data = Matrix{Float32}(undef, size(bdf_out.data)[1], convert(Int64, (size(bdf_out.data)[2])/dec_factor))
+     for i in 1:size(bdf_out.data, 1)
+       data[i, :] = convert(Array{Float32}, transpose(resample(bdf_out.data[i,:], 1/dec_factor)))
+     end
+     bdf_out.data = data
 
+     bdf_out.header["sample_rate"] = convert(Array{Int64}, (bdf_out.header["sample_rate"] ./ dec_factor))
+     bdf_out.time = collect(0:size(bdf_out.data, 2) -1) / bdf_out.header["sample_rate"][1]
 
+     return bdf_out
 
-  end
+   end
 
-  function downsample_bdf(bdf_in::BioSemiRawData)
-  end
+   """
+   function channel_idx(labels_in::Array{String}, channels::Array{Int})
 
-  ##############################################################################
-  function channel_idx(labels_in::Array{String}, num_in::Int64, channels::Array{String})
-    channels = [findfirst(x -> x == y, labels_in) for y in channels]
-    if any(x -> x == nothing, channels)
-      error("A requested channel label is not in the bdf file!")
-    else
-      println("Selecting channels:", labels_in[channels])
-    end
-    return unique(append!(channels, num_in))
-  end
+   Return channel index given labels and desired channel labels.
+   """
 
-  function channel_idx(labels_in::Array{String}, num_in::Int64, channels::Array{Int})
-    if any(x -> x > num_in, channels) || any(x -> x < 0, channels)
-      error("A requested channel number is not in the bdf file!")
-    else
-      println("Selecting channels:", labels_in[channels])
-    end
-    return unique(append!(channels, num_in))
-  end
+   function channel_idx(labels_in::Array{String}, channels::Array{String})
+     channels = [findfirst(x -> x == y, labels_in) for y in channels]
+     if any(x -> x == nothing, channels)
+       error("A requested channel label is not in the bdf file!")
+     else
+       println("Selecting channels:", labels_in[channels])
+     end
+     return unique(append!(channels, (length(labels_in) + 1)))
+   end
+
+   """
+   function channel_idx(labels_in::Array{String}, channels::Array{Int})
+   Return channel index given labels and desired channel index.
+   """
+   function channel_idx(labels_in::Array{String}, channels::Array{Int})
+     if any(x -> x > length(labels_in), channels) || any(x -> x < 0, channels)
+       error("A requested channel number is not in the bdf file!")
+     else
+       println("Selecting channels:", labels_in[channels])
+     end
+     return unique(append!(channels, (length(labels_in) + 1)))
+   end
 
 end
