@@ -178,6 +178,7 @@ module BioSemiBDF
 
     # create triggers dictionary
     triggers = Dict{String, Any}(
+    "raw" => trig_chan,
     "idx" => trig_idx,
     "val" => trig_val,
     "count" => sort(countmap(trig_val)),
@@ -294,7 +295,7 @@ module BioSemiBDF
     # write data
     data = round.(Int32, (bdf_in.data ./ bdf_in.header["scale_factor"][1:end-1]))
     trigs = round.(Int16, bdf_in.triggers["raw"])
-    status = round.(Int16, bdf_in.status)
+    status = round(Int16, bdf_in.status)
 
     num_data_records = bdf_in.header["num_data_records"]::Int64
     num_samples = bdf_in.header["num_samples"][1]::Int64
@@ -381,7 +382,7 @@ module BioSemiBDF
      idx_offset = size(bdf.data, 2)
      bdf_out.triggers["idx"] = vcat(bdf_out.triggers["idx"], bdf.triggers["idx"] .+ idx_offset)
     end
-    bdf_out.triggers["raw"] = vcat((x -> x.triggers["raw"]).(bdf_in)...)
+    triggers["raw"] = vcat((x -> x.triggers["raw"]).(bdf_in)...)
     bdf_out.triggers["val"] = vcat((x -> x.triggers["val"]).(bdf_in)...)
     bdf_out.triggers["count"] = sort(countmap(bdf_out.triggers["val"]))
 
@@ -444,7 +445,6 @@ module BioSemiBDF
 
      # update triggers
      bdf_out.triggers["idx"] = bdf_out.triggers["idx"][trigStart:trigEnd]
-     bdf_out.triggers["raw"] = bdf_out.triggers["raw"][idxStart:idxEnd]
      bdf_out.triggers["val"] = bdf_out.triggers["val"][trigStart:trigEnd]
      bdf_out.triggers["count"] = sort(countmap(bdf_out.triggers["val"]))
 
