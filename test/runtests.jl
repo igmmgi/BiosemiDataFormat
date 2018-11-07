@@ -68,16 +68,16 @@ end
     @test isequal(dat3.header["sample_rate"][1], 256)
 
     # some data
-    @test isequal(size(dat.data), (16, 15360*2))
+    @test isequal(size(dat3.data), (16, 15360*2))
 
     # channel labels
-    @test isequal(dat.header["channel_labels"][1], dat.labels[1])
-    @test isequal(dat.header["channel_labels"][16], dat.labels[16])
+    @test isequal(dat3.header["channel_labels"][1], dat.labels[1])
+    @test isequal(dat3.header["channel_labels"][16], dat.labels[16])
 
     # triggers
-    @test isequal(dat.triggers["idx"][1], 415)
-    @test isequal(dat.triggers["val"][1], 255)
-    @test isequal(dat.triggers["count"][255], 80)
+    @test isequal(dat3.triggers["idx"][1], 415)
+    @test isequal(dat3.triggers["val"][1], 255)
+    @test isequal(dat3.triggers["count"][255], 80)
 
 end
 
@@ -96,15 +96,15 @@ end
     @test isequal(dat3.header["sample_rate"][1], 2048)
 
     # some data
-    @test isequal(size(dat.data), (16, 122880*2))
+    @test isequal(size(dat3.data), (16, 122880*2))
 
     # channel labels
-    @test isequal(dat.header["channel_labels"][1], dat.labels[1])
-    @test isequal(dat.header["channel_labels"][16], dat.labels[16])
+    @test isequal(dat3.header["channel_labels"][1], dat.labels[1])
+    @test isequal(dat3.header["channel_labels"][16], dat.labels[16])
 
     # triggers
-    @test isequal(dat.triggers["idx"][1], 3353)
-    @test isequal(dat.triggers["val"][1], 255)
-    @test isequal(dat.triggers["count"][255], 78)
+    @test isequal(dat3.triggers["idx"][1], 3353)
+    @test isequal(dat3.triggers["val"][1], 255)
+    @test isequal(dat3.triggers["count"][255], 78)
 
 end
