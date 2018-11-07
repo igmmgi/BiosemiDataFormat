@@ -443,6 +443,7 @@ module BioSemiBDF
      bdf_out.data = bdf_out.data[:, idxStart:idxEnd]
      bdf_out.time = collect(0:size(bdf_out.data, 2) -1) / bdf_in[1].header["sample_rate"][1]
 
+     # TO DO: what about raw trigger channel?
      # update triggers
      bdf_out.triggers["idx"] = bdf_out.triggers["idx"][trigStart:trigEnd]
      bdf_out.triggers["val"] = bdf_out.triggers["val"][trigStart:trigEnd]

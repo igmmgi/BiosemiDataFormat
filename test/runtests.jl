@@ -26,6 +26,50 @@ using Test
 
 end
 
+@testset "Newtest17-256_write_bdf" begin
+
+    bdf_filename = joinpath(dirname(@__FILE__), "Newtest17-256.bdf")
+    dat1 = read_bdf(bdf_filename)
+    dat1.header["filename"] = "Newtest17-256_write.bdf"
+    write_bdf(dat1)
+
+    bdf_filename = joinpath(dirname(@__FILE__), "Newtest17-256_write.bdf")
+    dat2 = read_bdf(bdf_filename)
+
+    # some header details
+    @test isequal(dat1.header, dat2.header)
+    @test isequal(dat1.data, dat2.data)
+    @test isequal(dat1.labels, dat2.labels)
+    @test isequal(dat1.status, dat2.status)
+    @test isequal(dat1.time, dat2.time)
+    @test isequal(dat1.triggers, dat2.triggers)
+
+    rm(bdf_filename)
+
+end
+
+@testset "Newtest17-2048_write_bdf" begin
+
+    bdf_filename = joinpath(dirname(@__FILE__), "Newtest17-2048.bdf")
+    dat1 = read_bdf(bdf_filename)
+    dat1.header["filename"] = "Newtest17-2048_write.bdf"
+    write_bdf(dat1)
+
+    bdf_filename = joinpath(dirname(@__FILE__), "Newtest17-2048_write.bdf")
+    dat2 = read_bdf(bdf_filename)
+
+    # some header details
+    @test isequal(dat1.header, dat2.header)
+    @test isequal(dat1.data, dat2.data)
+    @test isequal(dat1.labels, dat2.labels)
+    @test isequal(dat1.status, dat2.status)
+    @test isequal(dat1.time, dat2.time)
+    @test isequal(dat1.triggers, dat2.triggers)
+
+    rm(bdf_filename)
+
+end
+
 
 @testset "Newtest17-2048_read_bdf" begin
 
