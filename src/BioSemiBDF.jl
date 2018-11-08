@@ -2,7 +2,12 @@ module BioSemiBDF
 
   using StatsBase, DSP
 
-  export read_bdf, merge_bdf, write_bdf, crop_bdf, downsample_bdf
+  export
+  crop_bdf,
+  downsample_bdf,
+  merge_bdf,
+  read_bdf,
+  write_bdf
 
   mutable struct BioSemiRawData
     header::Dict
@@ -443,8 +448,8 @@ module BioSemiBDF
      bdf_out.data = bdf_out.data[:, idxStart:idxEnd]
      bdf_out.time = collect(0:size(bdf_out.data, 2) -1) / bdf_in[1].header["sample_rate"][1]
 
-     # TO DO: what about raw trigger channel?
      # update triggers
+     bdf_out.triggers["raw"] = bdf_out.triggers["raw"][idxStart:idxEnd]
      bdf_out.triggers["idx"] = bdf_out.triggers["idx"][trigStart:trigEnd]
      bdf_out.triggers["val"] = bdf_out.triggers["val"][trigStart:trigEnd]
      bdf_out.triggers["count"] = sort(countmap(bdf_out.triggers["val"]))
@@ -475,7 +480,13 @@ module BioSemiBDF
      bdf_out.data = data
 
      bdf_out.header["sample_rate"] = convert(Array{Int64}, (bdf_out.header["sample_rate"] ./ dec_factor))
+     bdf_out.header["num_samples"] = convert(Array{Int64}, (bdf_out.header["num_samples"] ./ dec_factor))
      bdf_out.time = collect(0:size(bdf_out.data, 2) -1) / bdf_out.header["sample_rate"][1]
+
+     # update triggers
+     bdf_out.triggers["raw"] = zeros(Int16, 1, size(bdf_out.data, 2))
+     bdf_out.triggers["idx"] = convert(Array{Int64}, round.(bdf_out.triggers["idx"]/dec_factor))
+     bdf_out.triggers["raw"][bdf_out.triggers["idx"]] = bdf_out.triggers["val"]
 
      return bdf_out
 
