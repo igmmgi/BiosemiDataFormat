@@ -68,7 +68,6 @@ end
 
 end
 
-
 @testset "Newtest17-2048_read_bdf" begin
 
     bdf_filename = joinpath(dirname(@__FILE__), "Newtest17-2048.bdf")

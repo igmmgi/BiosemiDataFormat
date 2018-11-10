@@ -38,7 +38,7 @@ module BioSemiBDF
   write_bdf(dat3)
   ```
   """
-  function read_bdf(filename::AbstractString; header_only::Bool = false, channels = Array{Any}[])
+  function read_bdf(filename::String; header_only::Bool = false, channels = Array{Any}[])
 
     fid = open(filename, "r")
 
@@ -141,6 +141,21 @@ module BioSemiBDF
 
     if !isempty(channels)  # specific channel labels/numbers given
       channels = channel_idx(header["channel_labels"], channels)
+      # update header
+      header["num_channels"] = length(channels)
+      header["physical_min"] = header["physical_min"][channels]
+      header["physical_max"] = header["physical_max"][channels]
+      header["digital_min"] = header["digital_min"][channels]
+      header["digital_max"] = header["digital_max"][channels]
+      header["scale_factor"] = header["scale_factor"][channels]
+      header["transducer_type"] = header["transducer_type"][channels]
+      header["num_samples"] = header["num_samples"][channels]
+      header["channel_unit"] = header["channel_unit"][channels]
+      header["reserved"] = header["reserved"][channels]
+      header["sample_rate"] = header["sample_rate"][channels]
+      header["channel_labels"] = header["channel_labels"][channels]
+      header["pre_filter"] = header["pre_filter"][channels]
+      header["num_bytes_header"] = (length(channels)+1) * 256
     else
       channels = 1:num_channels
     end
@@ -350,7 +365,7 @@ module BioSemiBDF
   write_bdf(dat3)
   ```
   """
-  function merge_bdf(bdf_in::Array{BioSemiRawData}, filename_out::AbstractString)
+  function merge_bdf(bdf_in::Array{BioSemiRawData}, filename::AbstractString)
 
     # check data structs to merge have same number of channels
     num_chans = (x -> x.header["num_channels"]).(bdf_in)
@@ -372,7 +387,7 @@ module BioSemiBDF
 
     # make copy so that bdf_in is not altered
     bdf_out = deepcopy(bdf_in[1])
-    bdf_out.header["filename"] = filename_out
+    bdf_out.header["filename"] = filename
     bdf_out.header["num_data_records"] = sum((x -> x.header["num_data_records"]).(bdf_in))
 
     # merged dat_chan Matrix (channels x samples)
@@ -424,7 +439,7 @@ module BioSemiBDF
        idxEnd = bdf_in.triggers["idx"][trigEnd]
 
        # need to find boundardy equal to record breaks
-       borders = collect(1:sample_rate:size(bdf_in.data)[2])
+       borders = collect(1:sample_rate:size(bdf_in.data, 2))
        idxStart =  findlast(x -> x  <= idxStart, borders) * sample_rate
        idxEnd   = (findfirst(x -> x >= idxEnd,   borders) * sample_rate) - 1
 
@@ -455,7 +470,6 @@ module BioSemiBDF
      bdf_out.triggers["count"] = sort(countmap(bdf_out.triggers["val"]))
 
      return bdf_out
-
    end
 
    """
@@ -465,27 +479,33 @@ module BioSemiBDF
    ### Examples:
    ```julia
    dat1 = read_bdf("filename1.bdf")
-   dat2 = downsample_bdf(dat1, 2)
+   dat2 = downsample_bdf(dat1, 2, 10)
    ```
    """
-   # TO DO: mirror data/subtract channel mean to avoid edge artifacts
-   function downsample_bdf(bdf_in::BioSemiRawData, dec_factor::Int64)
+   function downsample_bdf(bdf_in::BioSemiRawData, dec_factor)
+
+     if !ispow2(dec_factor)
+       error("dec_factor should be power of 2!")
+     end
+     mirror_samples = dec_factor * 20  # enough samples?
+     mirror_dec = div(mirror_samples, dec_factor)
 
      bdf_out = deepcopy(bdf_in)
-
-     data = Matrix{Float32}(undef, size(bdf_out.data)[1], convert(Int64, (size(bdf_out.data)[2])/dec_factor))
+     data = Matrix{Float32}(undef, size(bdf_out.data, 1), div(size(bdf_out.data, 2), dec_factor))
      for i in 1:size(bdf_out.data, 1)
-       data[i, :] = convert(Array{Float32}, transpose(resample(bdf_out.data[i,:], 1/dec_factor)))
+       tmp_dat = hcat(bdf_out.data[i, mirror_samples:-1:1]', bdf_out.data[i, :]', bdf_out.data[i, end:-1:end-(mirror_samples-1)]')
+       tmp_dat = resample(tmp_dat',  (1/dec_factor))
+       data[i, :] = convert(Array{Float32}, transpose(tmp_dat[mirror_dec+1:end-mirror_dec]))
      end
      bdf_out.data = data
 
-     bdf_out.header["sample_rate"] = convert(Array{Int64}, (bdf_out.header["sample_rate"] ./ dec_factor))
-     bdf_out.header["num_samples"] = convert(Array{Int64}, (bdf_out.header["num_samples"] ./ dec_factor))
+     bdf_out.header["sample_rate"] = div.(bdf_out.header["sample_rate"], dec_factor)
+     bdf_out.header["sample_rate"] = div.(bdf_out.header["num_samples"], dec_factor)
      bdf_out.time = collect(0:size(bdf_out.data, 2) -1) / bdf_out.header["sample_rate"][1]
 
      # update triggers
      bdf_out.triggers["raw"] = zeros(Int16, 1, size(bdf_out.data, 2))
-     bdf_out.triggers["idx"] = convert(Array{Int64}, round.(bdf_out.triggers["idx"]/dec_factor))
+     bdf_out.triggers["idx"] = convert(Array{Int64}, round.(bdf_out.triggers["idx"] / dec_factor))
      bdf_out.triggers["raw"][bdf_out.triggers["idx"]] = bdf_out.triggers["val"]
 
      return bdf_out
@@ -494,10 +514,8 @@ module BioSemiBDF
 
    """
    function channel_idx(labels_in::Array{String}, channels::Array{Int})
-
    Return channel index given labels and desired channel labels.
    """
-
    function channel_idx(labels_in::Array{String}, channels::Array{String})
      channels = [findfirst(x -> x == y, labels_in) for y in channels]
      if any(x -> x == nothing, channels)
@@ -505,7 +523,7 @@ module BioSemiBDF
      else
        println("Selecting channels:", labels_in[channels])
      end
-     return unique(append!(channels, (length(labels_in) + 1)))
+     return unique(append!(channels, length(labels_in)))
    end
 
    """
@@ -518,7 +536,7 @@ module BioSemiBDF
      else
        println("Selecting channels:", labels_in[channels])
      end
-     return unique(append!(channels, (length(labels_in) + 1)))
+     return unique(append!(channels, length(labels_in)))
    end
 
 end
