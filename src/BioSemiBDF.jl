@@ -19,7 +19,7 @@ module BioSemiBDF
   end
 
   """
-  function read_bdf(filename::AbstractString; header_only::Bool = false, channels = Array{Any}[])
+  function read_bdf(filename::String; header_only::Bool=false, channels=Array{Any}[])
 
   Reads BioSemi Data Format (bdf) files.
   See https://www.biosemi.com/faq_file_format.htm for file format details.
@@ -38,7 +38,7 @@ module BioSemiBDF
   write_bdf(dat3)
   ```
   """
-  function read_bdf(filename::String; header_only::Bool = false, channels = Array{Any}[])
+  function read_bdf(filename::String; header_only::Bool=false, channels=Array{Any}[])
 
     fid = open(filename, "r")
 
@@ -270,10 +270,8 @@ module BioSemiBDF
       write(fid, UInt8(i))
     end
     # channel_labels 16 bytes
-    for i in bdf_in.header["channel_labels"]
-      for j in rpad(i, 16)
+    for i in bdf_in.header["channel_labels"], j in rpad(i, 16)
         write(fid, UInt8(j))
-      end
     end
     # transducer_type 80 bytes
     for i in bdf_in.header["transducer_type"], j in rpad(i, 80)
@@ -365,7 +363,11 @@ module BioSemiBDF
   write_bdf(dat3)
   ```
   """
-  function merge_bdf(bdf_in::Array{BioSemiRawData}, filename::AbstractString)
+  function merge_bdf(bdf_in::Array{BioSemiRawData}, filename::String="merged.bdf")
+
+    if filename == "merged.bdf"
+      @warn "Using merge.bdf as filename"
+    end
 
     # check data structs to merge have same number of channels
     num_chans = (x -> x.header["num_channels"]).(bdf_in)
@@ -411,7 +413,7 @@ module BioSemiBDF
   end
 
    """
-   function crop_bdf(bdf_in::BioSemiRawData, crop_type::AbstractString, val::Array{Int}, filename_out::AbstractString)
+   function crop_bdf(bdf_in::BioSemiRawData, crop_type::tString, val::Array{Int}, filename::String)
 
    Recuce the length of the recorded data. The borded upon which to crop the bdf file can be defined using either
    a start and end trigger ("triggers") or a start and end record ("records").
@@ -423,10 +425,14 @@ module BioSemiBDF
    dat3 = crop_bdf(dat1, "records", [1 100]) # data records 1 to 100 inclusive
    ```
    """
-   function crop_bdf(bdf_in::BioSemiRawData, crop_type::AbstractString, val::Array{Int}, filename_out::AbstractString)
+   function crop_bdf(bdf_in::BioSemiRawData, crop_type::String, val::Array{Int}, filename::String="crop.bdf")
 
      if length(val) != 2
        error("val should be of length 2")
+     end
+
+     if filename == "crop.bdf"
+       @warn "Using crop.bdf as filename"
      end
 
      sample_rate = bdf_in.header["sample_rate"][1]
@@ -434,12 +440,12 @@ module BioSemiBDF
 
        # find trigger value index
        trigStart = findfirst(x -> x == val[1], bdf_in.triggers["val"])
-       trigEnd = findlast(x -> x == val[2], bdf_in.triggers["val"])
-       idxStart = bdf_in.triggers["idx"][trigStart]
-       idxEnd = bdf_in.triggers["idx"][trigEnd]
+       trigEnd   = findlast(x -> x == val[2], bdf_in.triggers["val"])
+       idxStart  = bdf_in.triggers["idx"][trigStart]
+       idxEnd    = bdf_in.triggers["idx"][trigEnd]
 
        # need to find boundardy equal to record breaks
-       borders = collect(1:sample_rate:size(bdf_in.data, 2))
+       borders  = collect(1:sample_rate:size(bdf_in.data, 2))
        idxStart =  findlast(x -> x  <= idxStart, borders) * sample_rate
        idxEnd   = (findfirst(x -> x >= idxEnd,   borders) * sample_rate) - 1
 
@@ -458,7 +464,7 @@ module BioSemiBDF
 
      # copy data and crop
      bdf_out = deepcopy(bdf_in)
-     bdf_out.header["filename"] = filename_out
+     bdf_out.header["filename"] = filename
      bdf_out.header["num_data_records"] = (idxEnd - idxStart) * sample_rate
      bdf_out.data = bdf_out.data[:, idxStart:idxEnd]
      bdf_out.time = collect(0:size(bdf_out.data, 2) -1) / bdf_in[1].header["sample_rate"][1]
@@ -470,10 +476,11 @@ module BioSemiBDF
      bdf_out.triggers["count"] = sort(countmap(bdf_out.triggers["val"]))
 
      return bdf_out
+
    end
 
    """
-   function downsample_bdf(bdf_in::BioSemiRawData, dec_factor::Int64)
+   function downsample_bdf(bdf_in::BioSemiRawData, dec_factor::Int)
    Reduce the sampling rate within a BioSemiRawData struct by an integer factor (dec_factor).
 
    ### Examples:
@@ -482,7 +489,11 @@ module BioSemiBDF
    dat2 = downsample_bdf(dat1, 2, 10)
    ```
    """
-   function downsample_bdf(bdf_in::BioSemiRawData, dec_factor)
+   function downsample_bdf(bdf_in::BioSemiRawData, dec_factor::Int, filename::String="downsample.bdf")
+
+     if filename == "downsample.bdf"
+       @warn "Using downsample.bdf as filename"
+     end
 
      if !ispow2(dec_factor)
        error("dec_factor should be power of 2!")
@@ -513,7 +524,7 @@ module BioSemiBDF
    end
 
    """
-   function channel_idx(labels_in::Array{String}, channels::Array{Int})
+   function channel_idx(labels_in::Array{String}, channels::Array{String})
    Return channel index given labels and desired channel labels.
    """
    function channel_idx(labels_in::Array{String}, channels::Array{String})
