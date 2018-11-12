@@ -39,9 +39,6 @@ module BioSemiBDF
   write_bdf(dat3)
   ```
   """
-  function read_bdf(filename::String, header_only::Bool=false, channels=Array{Any}[])
-    read_bdf(filename==filename; header_only=header_only, channels=channels)
-  end
   function read_bdf(filename::String; header_only::Bool=false, channels=Array{Any}[])
 
     fid = open(filename, "r")
@@ -405,7 +402,7 @@ module BioSemiBDF
   function select_channels_bdf(bdf_in::BioSemiRawData, channels=Array{Any}[])
     Select specific channels.
     """
-    function select_channels_bdf(bdf_in::BioSemiRawData, channels=Array{Any}[])
+    function select_channels_bdf(bdf_in::BioSemiRawData; channels=Array{Any}[])
 
       bdf_out = deepcopy(bdf_in)
 
