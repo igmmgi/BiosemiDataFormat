@@ -22,7 +22,7 @@ end
     bdf_filename = joinpath(dirname(@__FILE__), "Newtest17-256.bdf")
     dat = read_bdf(bdf_filename, channels = [1, 3, 5])
 
-    @test isequal(dat.header["num_channels"], 5)
+    @test isequal(dat.header["num_channels"], 4)
     @test isequal(dat.header["num_data_records"], 60)
     @test isequal(dat.header["sample_rate"][1], 256)
     @test isequal(size(dat.data), (3, 15360))
