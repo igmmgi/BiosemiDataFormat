@@ -163,10 +163,10 @@ end
 
     @test isequal(dat1.header["num_channels"], 4)
     @test isequal(dat1.header["num_data_records"], 60)
-    @test isequal(dat1.header["sample_rate"][1], 256)
-    @test isequal(size(dat1.data), (3, 15360))
-    @test isequal(dat1.triggers["idx"][1], 415)
+    @test isequal(dat1.header["sample_rate"][1], 2048)
+    @test isequal(size(dat1.data), (3, 122880))
+    @test isequal(dat1.triggers["idx"][1], 3353)
     @test isequal(dat1.triggers["val"][1], 255)
-    @test isequal(dat1.triggers["count"][255], 40)
+    @test isequal(dat1.triggers["count"][255], 39)
 
 end
