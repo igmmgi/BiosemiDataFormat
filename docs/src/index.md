@@ -1,33 +1,22 @@
-#Documentation Title
+# BioSemiBDF Documentation 
 
-Some text describing the package.
+Julia code for BioSemi 24 bit EEG files. The code can be used for:
 
-## Subtitle
+* reading files into Julia data struct
+* cropping file length
+* reducing the sample rate
+* selecting/reducing the number of channels
+* writing a Julia data struct to a bdf fileformat
 
-More text
+## Functions 
 
-## Tutorials
+* crop_bdf
+* downsample_bdf
+* merge_bdf
+* select_channels_bdf
+* read_bdf
+* write_bdf
 
-```@contents
-Pages = [
-  "tutorials/page1.md",
-  "tutorials/page2.md",
-  "tutorials/page3.md"
-]
-Depth = 2
-```
 
-## Another Section
-```@contents
-Pages = [
-  "sec2/page1.md",
-  "sec2/page2.md",
-  "sec2/page3.md"
-]
-Depth = 2
-```
 
-## Index
 
-```@index
-```

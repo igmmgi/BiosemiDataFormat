@@ -1,10 +1,10 @@
 # BioSemiBDF
 Julia code for BioSemi 24 bit EEG files. The code can be used for:
 
-* reading bdf files into Julia data struct
-* cropping the length of recorded bdf files
-* reducing the sample rate of bdf files
-* selecting/reducing the number of channels in a bdf file
+* reading files into Julia data struct
+* cropping file length 
+* reducing the sample rate 
+* selecting/reducing the number of channels 
 * writing a Julia data struct to a bdf fileformat
 
 ## Installation

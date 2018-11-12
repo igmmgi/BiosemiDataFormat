@@ -8,7 +8,6 @@ module BioSemiBDF
   merge_bdf,
   select_channels_bdf,
   read_bdf,
-  update_header_bdf,
   write_bdf
 
   mutable struct BioSemiRawData
