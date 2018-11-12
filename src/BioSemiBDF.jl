@@ -12,7 +12,6 @@ module BioSemiBDF
   mutable struct BioSemiRawData
     header::Dict
     data::Matrix
-    labels::Array
     time::Array
     triggers::Dict
     status::Array
@@ -159,7 +158,6 @@ module BioSemiBDF
     else
       channels = 1:num_channels
     end
-    labels = header["channel_labels"][channels[1:end-1]]
 
     # last channel is trigger channel
     dat_chans = Matrix{Float32}(undef, length(channels)-1, (num_data_records*num_samples[1]))
@@ -205,7 +203,7 @@ module BioSemiBDF
     "time" => hcat(trig_val, pushfirst!(diff(trig_idx), 0) / header["sample_rate"][1])
     )
 
-    return BioSemiRawData(header, dat_chans, labels, time, triggers, status_chan)
+    return BioSemiRawData(header, dat_chans, time, triggers, status_chan)
 
   end
 
@@ -412,10 +410,46 @@ module BioSemiBDF
 
   end
 
-   """
+  """
+  function select_channels(bdf_in::BioSemiRawData, channels=Array{Any}[])
+    Select specific channels.
+    """
+    function select_channels(bdf_in::BioSemiRawData, channels=Array{Any}[])
+
+      bdf_out = deepcopy(bdf_in)
+
+      if !isempty(channels)  # specific channel labels/numbers given
+        channels = channel_idx(bdf_out.header["channel_labels"], channels)
+        # update header
+        bdf_out.header["num_channels"] = length(channels)
+        bdf_out.header["physical_min"] = bdf_out.header["physical_min"][channels]
+        bdf_out.header["physical_max"] = bdf_out.header["physical_max"][channels]
+        bdf_out.header["digital_min"] = bdf_out.header["digital_min"][channels]
+        bdf_out.header["digital_max"] = bdf_out.header["digital_max"][channels]
+        bdf_out.header["scale_factor"] = bdf_out.header["scale_factor"][channels]
+        bdf_out.header["transducer_type"] = bdf_out.header["transducer_type"][channels]
+        bdf_out.header["num_samples"] = bdf_out.header["num_samples"][channels]
+        bdf_out.header["channel_unit"] = bdf_out.header["channel_unit"][channels]
+        bdf_out.header["reserved"] = bdf_out.header["reserved"][channels]
+        bdf_out.header["sample_rate"] = bdf_out.header["sample_rate"][channels]
+        bdf_out.header["channel_labels"] = bdf_out.header["channel_labels"][channels]
+        bdf_out.header["pre_filter"] = bdf_out.header["pre_filter"][channels]
+        bdf_out.header["num_bytes_header"] = (length(channels)+1) * 256
+      else
+        channels = 1:num_channels
+      end
+
+      bdf_out.data = bdf_out.data[channels[1:end-1], :]
+
+      return bdf_out
+
+    end
+
+
+    """
    function crop_bdf(bdf_in::BioSemiRawData, crop_type::tString, val::Array{Int}, filename::String)
 
-   Recuce the length of the recorded data. The borded upon which to crop the bdf file can be defined using either
+   Recuce the length of the recorded data. The border upon which to crop the bdf file can be defined using either
    a start and end trigger ("triggers") or a start and end record ("records").
 
    ### Examples:

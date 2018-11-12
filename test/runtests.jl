@@ -38,7 +38,6 @@ end
 
     # some header details
     @test isequal(dat1.data, dat2.data)
-    @test isequal(dat1.labels, dat2.labels)
     @test isequal(dat1.status, dat2.status)
     @test isequal(dat1.time, dat2.time)
     @test isequal(dat1.triggers, dat2.triggers)
@@ -59,7 +58,6 @@ end
 
     # some header details
     @test isequal(dat1.data, dat2.data)
-    @test isequal(dat1.labels, dat2.labels)
     @test isequal(dat1.status, dat2.status)
     @test isequal(dat1.time, dat2.time)
     @test isequal(dat1.triggers, dat2.triggers)
