@@ -19,12 +19,15 @@ module BioSemiBDF
   end
 
   """
-  function read_bdf(filename::String; header_only::Bool=false, channels=Array{Any}[])
+    read_bdf(filename::String; header_only::Bool=false, channels=Array{Any}[])
 
   Reads BioSemi Data Format (bdf) files.
   See https://www.biosemi.com/faq_file_format.htm for file format details.
   ### Inputs:
-  * filename
+  * filename String
+  * header_only Bool=false
+  * header_only Bool=false
+  * channels Array Int/String
   ### Outputs:
   * BioSemiRawData struct with the following fields
   * header Dict

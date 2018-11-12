@@ -15,8 +15,10 @@ Julia code for BioSemi 24 bit EEG files. The code can be used for:
 * merge_bdf
 * select_channels_bdf
 * read_bdf
+```@docs
+read_bdf(filename::String; header_only::Bool=false, channels=Array{Any}[])
+```
 * write_bdf
-
 
 
 
