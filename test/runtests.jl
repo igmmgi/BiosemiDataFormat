@@ -20,7 +20,7 @@ end
 @testset "Newtest17-256_read_bdf_channels" begin
 
     bdf_filename = joinpath(dirname(@__FILE__), "Newtest17-256.bdf")
-    dat = read_bdf(bdf_filename, channels = [1, 3, 5])
+    dat = read_bdf(bdf_filename, channels=[1, 3, 5])
 
     @test isequal(dat.header["num_channels"], 4)
     @test isequal(dat.header["num_data_records"], 60)
@@ -70,7 +70,7 @@ end
 @testset "Newtest17-2048_read_bdf_channels" begin
 
     bdf_filename = joinpath(dirname(@__FILE__), "Newtest17-2048.bdf")
-    dat = read_bdf(bdf_filename, channels = ["A1", "A3", "A5"])
+    dat = read_bdf(bdf_filename, channels=["A1", "A3", "A5"])
 
     @test isequal(dat.header["num_channels"], 4)
     @test isequal(dat.header["num_data_records"], 60)
@@ -142,7 +142,7 @@ end
     bdf_filename = joinpath(dirname(@__FILE__), "Newtest17-256.bdf")
     dat = read_bdf(bdf_filename)
 
-    dat1 = select_channels_bdf(dat, channels = [1,3,5])
+    dat1 = select_channels_bdf(dat, channels=[1, 3, 5])
 
     @test isequal(dat1.header["num_channels"], 4)
     @test isequal(dat1.header["num_data_records"], 60)
@@ -159,7 +159,7 @@ end
     bdf_filename = joinpath(dirname(@__FILE__), "Newtest17-2048.bdf")
     dat = read_bdf(bdf_filename)
 
-    dat1 = select_channels_bdf(dat, channels = ["A1", "A3", "A5"])
+    dat1 = select_channels_bdf(dat, channels=["A1", "A3", "A5"])
 
     @test isequal(dat1.header["num_channels"], 4)
     @test isequal(dat1.header["num_data_records"], 60)
