@@ -144,7 +144,7 @@ end
 
     dat1 = select_channels_bdf(dat, channels = [1,3,5])
 
-    @test isequal(dat1.header["num_channels"], 17)
+    @test isequal(dat1.header["num_channels"], 4)
     @test isequal(dat1.header["num_data_records"], 60)
     @test isequal(dat1.header["sample_rate"][1], 256)
     @test isequal(size(dat1.data), (3, 15360))
