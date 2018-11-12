@@ -557,7 +557,7 @@ module BioSemiBDF
    Return channel index given labels and desired channel labels.
    """
    function channel_idx(labels_in::Array{String}, channels::Array{String})
-     channels = [findfirst(x -> x == y, labels_in) for y in channels]
+     channels = [findfirst(map(x -> x == y, labels_in)) for y in channels]
      if any(x -> x == nothing, channels)
        error("A requested channel label is not in the bdf file!")
      else
@@ -571,7 +571,7 @@ module BioSemiBDF
    Return channel index given labels and desired channel index.
    """
    function channel_idx(labels_in::Array{String}, channels::Array{Int})
-     if any(x -> x > length(labels_in), channels) || any(x -> x < 0, channels)
+     if any(map(x -> x > length(labels_in), channels)) || any(map(x -> x < 0, channels))
        error("A requested channel number is not in the bdf file!")
      else
        println("Selecting channels:", labels_in[channels])
