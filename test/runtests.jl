@@ -183,7 +183,7 @@ end
 
     bdf_filename = joinpath(dirname(@__FILE__), "Newtest17-256.bdf")
     dat1 = read_bdf(bdf_filename)
-    dat2 = downsample_bdf(dat1, 2)
+    dat2 = downsample_bdf(dat1, 2, "Newtest17-128.bdf")
 
     @test isequal(dat2.header["sample_rate"][1], 128)
 
@@ -193,7 +193,7 @@ end
 
     bdf_filename = joinpath(dirname(@__FILE__), "Newtest17-2048.bdf")
     dat1 = read_bdf(bdf_filename)
-    dat2 = downsample_bdf(dat1, 2)
+    dat2 = downsample_bdf(dat1, 2, "Newtest17-1024.bdf")
 
     @test isequal(dat2.header["sample_rate"][1], 1024)
 

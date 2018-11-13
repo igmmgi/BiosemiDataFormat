@@ -571,13 +571,13 @@ module BioSemiBDF
    """
    function channel_idx(labels_in::Array{String}, channels::Array{String})
 
-     chan_idx = [findfirst(x .== labels_in) for x in channels]
-     if any(chan_idx .== nothing)
+     channels = [findfirst(x .== labels_in) for x in channels]
+     if any(channels .== nothing)
        error("A requested channel label is not in the bdf file!")
      else
-       println("Selecting channels:", labels_in[chan_idx])
+       println("Selecting channels:", labels_in[channels])
      end
-     return unique(append!(chan_idx, length(labels_in)))
+     return unique(append!(channels, length(labels_in)))
    end
 
    """
