@@ -585,7 +585,7 @@ module BioSemiBDF
    Return channel index given labels and desired channel index.
    """
    function channel_idx(labels_in::Array{String}, channels::Array{Int})
-     if any(chanels .> length(labels_in)) || any(channels .< 0)
+     if any(channels .> length(labels_in)) || any(channels .< 0)
        error("A requested channel number is not in the bdf file!")
      else
        println("Selecting channels:", labels_in[channels])
