@@ -147,7 +147,7 @@ end
 
     bdf_filename = joinpath(dirname(@__FILE__), "Newtest17-256.bdf")
     dat1 = read_bdf(bdf_filename)
-    dat2 = select_channels_bdf(dat, channels=[1, 3, 5])
+    dat2 = select_channels_bdf(dat1, channels=[1, 3, 5])
 
     @test isequal(dat1.data[1,:], dat2.data[1,:])
     @test isequal(dat1.data[5,:], dat2.data[3,:])
@@ -165,7 +165,7 @@ end
 
     bdf_filename = joinpath(dirname(@__FILE__), "Newtest17-2048.bdf")
     dat1 = read_bdf(bdf_filename)
-    dat2 = select_channels_bdf(dat, channels=["A1", "A3", "A5"])
+    dat2 = select_channels_bdf(dat1, channels=["A1", "A3", "A5"])
 
     @test isequal(dat1.data[1,:], dat2.data[1,:])
     @test isequal(dat1.data[5,:], dat2.data[3,:])
