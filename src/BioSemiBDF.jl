@@ -198,7 +198,7 @@ module BioSemiBDF
   end
 
   """
-  function write_bdf(bdf_in::BioSemiRawData)
+    write_bdf(bdf_in::BioSemiRawData)
 
   Write BioSemiRaw structs to *.bdf file.
   See https://www.biosemi.com/faq_file_format.htm for file format details.
@@ -339,6 +339,8 @@ module BioSemiBDF
   end
 
   """
+    merge_bdf(bdf_in::Array{BioSemiRawData}, filename::String="merged.bdf")
+
   Merge BioSemiRaw structs to single BioSemiRaw struct. Checks that the
     input BioSemiRaw structs have the same number of channels, same channel
     labels and that each channel has the same sample rate.
@@ -348,7 +350,6 @@ module BioSemiBDF
   dat1 = read_bdf("filename1.bdf")
   dat2 = read_bdf("filename2.bdf")
   dat3 = merge_bdf([dat1, dat2], "filename3.bdf")
-  write_bdf(dat3)
   ```
   """
   function merge_bdf(bdf_in::Array{BioSemiRawData}, filename::String="merged.bdf")
@@ -401,8 +402,17 @@ module BioSemiBDF
   end
 
   """
-  function select_channels_bdf(bdf_in::BioSemiRawData, channels=Array{Any}[])
-    Select specific channels.
+    select_channels_bdf(bdf_in::BioSemiRawData; channels=Array{Any}[])
+
+    Select specific channels from BioSemiRawData struct. Channels can be specified
+      using channel numbers or channel labels.
+
+      ### Examples:
+      ```julia
+      dat1 = read_bdf("filename1.bdf")
+      dat1 = select_channels_bdf(dat, channels = [1, 2])
+      dat1 = select_channels_bdf(dat, channels = ["Fp1", "F1"])
+      ```
     """
     function select_channels_bdf(bdf_in::BioSemiRawData; channels=Array{Any}[])
 
@@ -423,18 +433,18 @@ module BioSemiBDF
 
 
     """
-   function crop_bdf(bdf_in::BioSemiRawData, crop_type::tString, val::Array{Int}, filename::String)
+    crop_bdf(bdf_in::BioSemiRawData, crop_type::tString, val::Array{Int}, filename::String)
 
-   Recuce the length of the recorded data. The border upon which to crop the bdf file can be defined using either
-   a start and end trigger ("triggers") or a start and end record ("records").
+    Recuce the length of the recorded data. The border upon which to crop the bdf file can be defined using either
+    a start and end trigger ("triggers") or a start and end record ("records").
 
-   ### Examples:
-   ```julia
-   dat1 = read_bdf("filename1.bdf")
-   dat2 = crop_bdf(dat1, "triggers", [1 2])  # between first trigger 1 and last trigger 2
-   dat3 = crop_bdf(dat1, "records", [1 100]) # data records 1 to 100 inclusive
-   ```
-   """
+    ### Examples:
+    ```julia
+    dat1 = read_bdf("filename1.bdf")
+    dat2 = crop_bdf(dat1, "triggers", [1 2])  # between first trigger 1 and last trigger 2
+    dat3 = crop_bdf(dat1, "records", [1 100]) # data records 1 to 100 inclusive
+    ```
+    """
    function crop_bdf(bdf_in::BioSemiRawData, crop_type::String, val::Array{Int}, filename::String="crop.bdf")
 
      if length(val) != 2
@@ -490,7 +500,8 @@ module BioSemiBDF
    end
 
    """
-   function downsample_bdf(bdf_in::BioSemiRawData, dec_factor::Int)
+    downsample_bdf(bdf_in::BioSemiRawData, dec_factor::Int)
+
    Reduce the sampling rate within a BioSemiRawData struct by an integer factor (dec_factor).
 
    ### Examples:
@@ -534,7 +545,7 @@ module BioSemiBDF
    end
 
    """
-   function update_header_bdf(bdf_in::BioSemiRawData, channels::Array{Int})
+    update_header_bdf(bdf_in::BioSemiRawData, channels::Array{Int})
    Updates header Dict within BioSemiRawData struct following the selection of specific channels in read_bdf or select_channels_bdf.
    """
    function update_header_bdf!(header::Dict, channels::Array{Int})
@@ -559,8 +570,9 @@ module BioSemiBDF
    Return channel index given labels and desired channel labels.
    """
    function channel_idx(labels_in::Array{String}, channels::Array{String})
-     channels = [findfirst(map(x -> x == y, labels_in)) for y in channels]
-     if any(x -> x == nothing, channels)
+
+     channels = [findfirst(x .== labels_in), for x in channels]
+     if any(channels .== nothing)
        error("A requested channel label is not in the bdf file!")
      else
        println("Selecting channels:", labels_in[channels])
@@ -573,7 +585,7 @@ module BioSemiBDF
    Return channel index given labels and desired channel index.
    """
    function channel_idx(labels_in::Array{String}, channels::Array{Int})
-     if any(map(x -> x > length(labels_in), channels)) || any(map(x -> x < 0, channels))
+     if any(chanels .> length(labels_in)) || any(channels .< 0))
        error("A requested channel number is not in the bdf file!")
      else
        println("Selecting channels:", labels_in[channels])
