@@ -198,3 +198,24 @@ end
     @test isequal(dat2.header["sample_rate"][1], 1024)
 
 end
+
+@testset "channel_idx" begin
+
+    x = channel_idx(["A1", "A2", "A3"], ["A1", "A3"])
+    @test isequal(x, [1, 3])
+
+    x = channel_idx(["A1", "A2", "A3", "A4"], ["A1", "A4"])
+    @test isequal(x, [1, 4])
+
+    @test_throws ERORR channel_idx(["A1"], ["zzz"])
+
+    x = channel_idx(["A1", "A2", "A3"], [1, 3])
+    @test isequal(x, [1, 3])
+
+    x = channel_idx(["A1", "A2", "A3", "A4"], [1, 4])
+    @test isequal(x, [1, 4])
+
+    @test_throws ERORR channel_idx(["A1"], [2])
+    @test_throws ERORR channel_idx(["A1"], [1, 2])
+
+end

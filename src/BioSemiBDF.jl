@@ -1,6 +1,8 @@
 module BioSemiBDF
 
-  using StatsBase, DSP
+  using
+  StatsBase,
+  DSP
 
   export
   crop_bdf,
@@ -433,7 +435,7 @@ module BioSemiBDF
 
 
     """
-    crop_bdf(bdf_in::BioSemiRawData, crop_type::tString, val::Array{Int}, filename::String)
+      crop_bdf(bdf_in::BioSemiRawData, crop_type::tString, val::Array{Int}, filename::String)
 
     Recuce the length of the recorded data. The border upon which to crop the bdf file can be defined using either
     a start and end trigger ("triggers") or a start and end record ("records").
@@ -566,7 +568,7 @@ module BioSemiBDF
    end
 
    """
-   function channel_idx(labels_in::Array{String}, channels::Array{String})
+    channel_idx(labels_in::Array{String}, channels::Array{String})
    Return channel index given labels and desired channel labels.
    """
    function channel_idx(labels_in::Array{String}, channels::Array{String})
@@ -581,7 +583,7 @@ module BioSemiBDF
    end
 
    """
-   function channel_idx(labels_in::Array{String}, channels::Array{Int})
+    channel_idx(labels_in::Array{String}, channels::Array{Int})
    Return channel index given labels and desired channel index.
    """
    function channel_idx(labels_in::Array{String}, channels::Array{Int})
