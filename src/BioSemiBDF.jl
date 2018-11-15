@@ -468,17 +468,25 @@ module BioSemiBDF
 
        # need to find boundardy equal to record breaks
        borders  = collect(1:sample_rate:size(bdf_in.data, 2))
-       idxStart =  findlast(x -> x  <= idxStart, borders) * sample_rate
-       idxEnd   = (findfirst(x -> x >= idxEnd,   borders) * sample_rate) - 1
+
+       # idxStart =  findlast(x -> x  <= idxStart, borders) * sample_rate
+       # idxEnd   = (findfirst(x -> x >= idxEnd,   borders) * sample_rate) - 1
+
+       idxStart =  findlast(borders  .<= idxStart) * sample_rate
+       idxEnd   = (findfirst(borders .>= idxEnd)   * sample_rate) - 1
 
      elseif crop_type == "records"
 
        idxStart = ((val[1]-1) * sample_rate) + 1
        idxEnd   =  (val[2]    * sample_rate)
 
+       # # find trigger value index
+       # trigStart = findfirst(x -> x >= idxStart, bdf_in.triggers["idx"])
+       # trigEnd   = findlast(x ->  x <= idxEnd,   bdf_in.triggers["idx"])
+
        # find trigger value index
-       trigStart = findfirst(x -> x >= idxStart, bdf_in.triggers["idx"])
-       trigEnd   = findlast(x ->  x <= idxEnd,   bdf_in.triggers["idx"])
+       trigStart = findfirst(bdf_in.triggers["idx"], .>= idxStart)
+       trigEnd   = findlast(bdf_in.triggers["idx"] .<= idxEnd)
 
      else
        error("crop_type not recognized!")

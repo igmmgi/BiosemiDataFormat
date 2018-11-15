@@ -8,6 +8,7 @@ Julia code for BioSemi 24 bit EEG files. The code can be used for:
 * selecting/reducing the number of channels
 * writing a Julia data struct to a bdf fileformat
 
+
 ## Functions 
 
 * crop_bdf
