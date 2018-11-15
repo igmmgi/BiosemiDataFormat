@@ -351,14 +351,10 @@ module BioSemiBDF
   ```julia
   dat1 = read_bdf("filename1.bdf")
   dat2 = read_bdf("filename2.bdf")
-  dat3 = merge_bdf([dat1, dat2], "filename3.bdf")
+  dat3 = merge_bdf([dat1, dat2], "filename_merged.bdf")
   ```
   """
-  function merge_bdf(bdf_in::Array{BioSemiRawData}, filename::String="merged.bdf")
-
-    if filename == "merged.bdf"
-      @warn "Using merge.bdf as filename"
-    end
+  function merge_bdf(bdf_in::Array{BioSemiRawData}, filename::String)
 
     # check data structs to merge have same number of channels
     num_chans = (x -> x.header["num_channels"]).(bdf_in)
@@ -412,8 +408,8 @@ module BioSemiBDF
       ### Examples:
       ```julia
       dat1 = read_bdf("filename1.bdf")
-      dat1 = select_channels_bdf(dat, channels = [1, 2])
-      dat1 = select_channels_bdf(dat, channels = ["Fp1", "F1"])
+      dat1 = select_channels_bdf(dat, [1, 2])
+      dat1 = select_channels_bdf(dat, ["Fp1", "F1"])
       ```
     """
     function select_channels_bdf(bdf_in::BioSemiRawData, channels::Union{Array{Int}, Array{String}})
