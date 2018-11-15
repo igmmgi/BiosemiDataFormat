@@ -404,7 +404,7 @@ module BioSemiBDF
   end
 
   """
-    select_channels_bdf(bdf_in::BioSemiRawData; channels=Array{Any}[])
+    select_channels_bdf(bdf_in::BioSemiRawData, channels::Union{Array{Int}, Array{String}})
 
     Select specific channels from BioSemiRawData struct. Channels can be specified
       using channel numbers or channel labels.
@@ -416,17 +416,12 @@ module BioSemiBDF
       dat1 = select_channels_bdf(dat, channels = ["Fp1", "F1"])
       ```
     """
-    #channels::Union{Array{Any}, Array{Int}, Array{String}}=[]
-    function select_channels_bdf(bdf_in::BioSemiRawData; channels::Union{Array{Int}, Array{String}})
+    function select_channels_bdf(bdf_in::BioSemiRawData, channels::Union{Array{Int}, Array{String}})
 
       bdf_out = deepcopy(bdf_in)
 
-      if !isempty(channels)  # specific channel labels/numbers given
-        channels = channel_idx(bdf_out.header["channel_labels"], channels)
-        update_header_bdf!(bdf_out.header, channels)
-      else
-        channels = 1:num_channels
-      end
+      channels = channel_idx(bdf_out.header["channel_labels"], channels)
+      update_header_bdf!(bdf_out.header, channels)
 
       bdf_out.data = bdf_out.data[channels[1:end-1], :]
 
@@ -444,11 +439,11 @@ module BioSemiBDF
     ### Examples:
     ```julia
     dat1 = read_bdf("filename1.bdf")
-    dat2 = crop_bdf(dat1, "triggers", [1 2])  # between first trigger 1 and last trigger 2
-    dat3 = crop_bdf(dat1, "records", [1 100]) # data records 1 to 100 inclusive
+    dat2 = crop_bdf(dat1, "triggers", [1 2],   "filename1_cropped.bdf") # between first trigger 1 and last trigger 2
+    dat3 = crop_bdf(dat1, "records",  [1 100], "filename1_cropped.bdf") # data records 1 to 100 inclusive
     ```
     """
-   function crop_bdf(bdf_in::BioSemiRawData, crop_type::String, val::Array{Int}, filename::String="crop.bdf")
+   function crop_bdf(bdf_in::BioSemiRawData, crop_type::String, val::Array{Int}, filename::String)
 
      if length(val) != 2
        error("val should be of length 2")
@@ -502,21 +497,17 @@ module BioSemiBDF
    end
 
    """
-    downsample_bdf(bdf_in::BioSemiRawData, dec_factor::Int)
+    downsample_bdf(bdf_in::BioSemiRawData, dec_factor::Int, filename::String)
 
    Reduce the sampling rate within a BioSemiRawData struct by an integer factor (dec_factor).
 
    ### Examples:
    ```julia
    dat1 = read_bdf("filename1.bdf")
-   dat2 = downsample_bdf(dat1, 2, 10)
+   dat2 = downsample_bdf(dat1, 2, "filename1_downsampled.bdf")
    ```
    """
-   function downsample_bdf(bdf_in::BioSemiRawData, dec_factor::Int, filename::String="downsample.bdf")
-
-     if filename == "downsample.bdf"
-       @warn "Using downsample.bdf as filename"
-     end
+   function downsample_bdf(bdf_in::BioSemiRawData, dec_factor::Int, filename::String)
 
      if !ispow2(dec_factor)
        error("dec_factor should be power of 2!")
