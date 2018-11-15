@@ -43,7 +43,7 @@ module BioSemiBDF
   write_bdf(dat3)
   ```
   """
-  function read_bdf(filename::String; header_only::Bool=false, channels=Array{Any}[])
+  function read_bdf(filename::String; header_only::Bool=false, channels::Union{Array{Any}, Array{Int}, Array{String}}=[])
 
     fid = open(filename, "r")
 
