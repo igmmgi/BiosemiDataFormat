@@ -21,7 +21,7 @@ module BioSemiBDF
   end
 
   """
-    read_bdf(filename::String; header_only::Bool=false, channels=Array{Any}[])
+    read_bdf(filename::String; header_only::Bool=false, channels::Union{Array{Any}, Array{Int}, Array{String}}=[])
 
   Reads BioSemi Data Format (bdf) files.
   See https://www.biosemi.com/faq_file_format.htm for file format details.
@@ -416,7 +416,8 @@ module BioSemiBDF
       dat1 = select_channels_bdf(dat, channels = ["Fp1", "F1"])
       ```
     """
-    function select_channels_bdf(bdf_in::BioSemiRawData; channels::Array{Any}[])
+    #channels::Union{Array{Any}, Array{Int}, Array{String}}=[]
+    function select_channels_bdf(bdf_in::BioSemiRawData; channels::Union{Array{Int}, Array{String}})
 
       bdf_out = deepcopy(bdf_in)
 
