@@ -416,7 +416,7 @@ module BioSemiBDF
       dat1 = select_channels_bdf(dat, channels = ["Fp1", "F1"])
       ```
     """
-    function select_channels_bdf(bdf_in::BioSemiRawData; channels=Array{Any}[])
+    function select_channels_bdf(bdf_in::BioSemiRawData; channels::Array{Any}[])
 
       bdf_out = deepcopy(bdf_in)
 
