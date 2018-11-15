@@ -485,8 +485,8 @@ module BioSemiBDF
        # trigEnd   = findlast(x ->  x <= idxEnd,   bdf_in.triggers["idx"])
 
        # find trigger value index
-       trigStart = findfirst(bdf_in.triggers["idx"], .>= idxStart)
-       trigEnd   = findlast(bdf_in.triggers["idx"] .<= idxEnd)
+       trigStart = findfirst(bdf_in.triggers["idx"] .>= idxStart)
+       trigEnd   = findlast(bdf_in.triggers["idx"]  .<= idxEnd)
 
      else
        error("crop_type not recognized!")
