@@ -460,10 +460,7 @@ module BioSemiBDF
      sample_rate = bdf_in.header["sample_rate"][1]
      if crop_type == "triggers"
 
-       # # find trigger value index
-       # trigStart = findfirst(x -> x == val[1], bdf_in.triggers["val"])
-       # trigEnd   = findlast(x -> x == val[2], bdf_in.triggers["val"])
-
+       # find trigger value index
        trigStart = findfirst(bdf_in.triggers["val"] .== val[1])
        trigEnd   = findlast(bdf_in.triggers["val"]  .== val[2])
        idxStart  = bdf_in.triggers["idx"][trigStart]
