@@ -206,17 +206,20 @@ module BioSemiBDF
     [write(fid, UInt8(i)) for i in rpad(string(bdf_in.header["num_data_records"]), 8)]
     [write(fid, UInt8(i)) for i in rpad(string(bdf_in.header["duration_data_records"]), 8)]
     [write(fid, UInt8(i)) for i in rpad(string(bdf_in.header["num_channels"]), 4)]
-    [write(fid, UInt8(j)) for i in bdf_in.header["channel_labels"], j in rpad(i, 16)]
-    [write(fid, UInt8(j)) for i in bdf_in.header["transducer_type"], j in rpad(i, 80)]
-    [write(fid, UInt8(j)) for i in bdf_in.header["channel_unit"], j in rpad(i, 8)]
-    [write(fid, UInt8(j)) for i in bdf_in.header["physical_min"], j in rpad(i, 8)]
-    [write(fid, UInt8(j)) for i in bdf_in.header["physical_max"], j in rpad(i, 8)]
-    [write(fid, UInt8(j)) for i in bdf_in.header["digital_min"], j in rpad(i, 8)]
-    [write(fid, UInt8(j)) for i in bdf_in.header["digital_max"], j in rpad(i, 8)]
-    [write(fid, UInt8(j)) for i in bdf_in.header["prefilter"], j in rpad(i, 80)]
-    [write(fid, UInt8(j)) for i in bdf_in.header["num_samples"], j in rpad(i, 8)]
-    [write(fid, UInt8(j)) for i in bdf_in.header["reserved"], j in rpad(i, 32)]
 
+
+    [write(fid, UInt8(j)) for i in bdf_in.header["channel_labels"] for j rpad(i, 16)]
+    [write(fid, UInt8(j)) for i in bdf_in.header["transducer_type"] for j in rpad(i, 80)]
+    [write(fid, UInt8(j)) for i in bdf_in.header["channel_unit"] for j in rpad(i, 8)]
+    [write(fid, UInt8(j)) for i in bdf_in.header["physical_min"] for j in rpad(i, 8)]
+    [write(fid, UInt8(j)) for i in bdf_in.header["physical_max"] for j in rpad(i, 8)]
+    [write(fid, UInt8(j)) for i in bdf_in.header["digital_min"] for j in rpad(i, 8)]
+    [write(fid, UInt8(j)) for i in bdf_in.header["digital_max"] for j in rpad(i, 8)]
+    [write(fid, UInt8(j)) for i in bdf_in.header["prefilter"] for j in rpad(i, 80)]
+    [write(fid, UInt8(j)) for i in bdf_in.header["num_samples"] for j in rpad(i, 8)]
+    [write(fid, UInt8(j)) for i in bdf_in.header["reserved"] for j in rpad(i, 32)]
+
+    # write data
     data             = round.(Int32, (bdf_in.data ./ bdf_in.header["scale_factor"][1:end-1]))
     scale_factor     = bdf_in.header["scale_factor"][1:end-1]
     trigs            = bdf_in.triggers["raw"]
