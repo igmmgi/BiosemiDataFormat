@@ -213,6 +213,7 @@ module BioSemiBDF
   dat1 = read_bdf("filename1.bdf")
   write_bdf(dat1)
   """
+  # TO DO: this still seems slow!
   function write_bdf(bdf_in::BioSemiRawData, filename::String="")
 
     if isempty(filename)
@@ -480,7 +481,7 @@ module BioSemiBDF
      # copy data and crop
      bdf_out = deepcopy(bdf_in)
      bdf_out.header["filename"] = filename
-     bdf_out.header["num_data_records"] = (idxEnd - idxStart) * sample_rate
+     bdf_out.header["num_data_records"] = Int(((idxEnd - idxStart)+1) / sample_rate)
      bdf_out.data = bdf_out.data[:, idxStart:idxEnd]
      bdf_out.time = collect(0:size(bdf_out.data, 2) -1) / bdf_out.header["sample_rate"][1]
 

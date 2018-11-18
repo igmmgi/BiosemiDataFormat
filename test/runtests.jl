@@ -179,6 +179,27 @@ end
 
 end
 
+@testset "Newtest17-256_crop_bdf" begin
+
+    bdf_filename = joinpath(dirname(@__FILE__), "Newtest17-256.bdf")
+    dat1 = read_bdf(bdf_filename)
+    dat2 = crop_bdf(dat1, "records", [10 20], "Newtest17-256_cropped.bdf")
+
+    @test isequal(dat2.header["num_data_records"], 11)
+
+end
+
+@testset "Newtest17-2048_crop_bdf" begin
+
+    bdf_filename = joinpath(dirname(@__FILE__), "Newtest17-2048.bdf")
+    dat1 = read_bdf(bdf_filename)
+    dat2 = crop_bdf(dat1, "records", [10 20], "Newtest17-2048_cropped.bdf")
+
+    @test isequal(dat2.header["num_data_records"], 11)
+
+end
+
+
 @testset "Newtest17-256_downsample_bdf" begin
 
     bdf_filename = joinpath(dirname(@__FILE__), "Newtest17-256.bdf")
