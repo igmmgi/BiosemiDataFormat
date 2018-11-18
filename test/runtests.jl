@@ -185,6 +185,8 @@ end
     dat1 = read_bdf(bdf_filename)
     dat2 = crop_bdf(dat1, "records", [10 20], "Newtest17-256_cropped.bdf")
 
+    @test isequal(size(dat1.data,  1), size(dat2.data, 1))
+    @test !isequal(size(dat1.data, 2), size(dat2.data, 2))
     @test isequal(dat2.header["num_data_records"], 11)
 
 end
@@ -195,6 +197,8 @@ end
     dat1 = read_bdf(bdf_filename)
     dat2 = crop_bdf(dat1, "records", [10 20], "Newtest17-2048_cropped.bdf")
 
+    @test isequal(size(dat1.data,  1), size(dat2.data, 1))
+    @test !isequal(size(dat1.data, 2), size(dat2.data, 2))
     @test isequal(dat2.header["num_data_records"], 11)
 
 end
