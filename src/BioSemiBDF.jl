@@ -217,7 +217,7 @@ module BioSemiBDF
     [write(fid, UInt8(j)) for i in bdf_in.header["physical_max"] for j in rpad(i, 8)]
     [write(fid, UInt8(j)) for i in bdf_in.header["digital_min"] for j in rpad(i, 8)]
     [write(fid, UInt8(j)) for i in bdf_in.header["digital_max"] for j in rpad(i, 8)]
-    [write(fid, UInt8(j)) for i in bdf_in.header["prefilter"] for j in rpad(i, 80)]
+    [write(fid, UInt8(j)) for i in bdf_in.header["pre_filter"] for j in rpad(i, 80)]
     [write(fid, UInt8(j)) for i in bdf_in.header["num_samples"] for j in rpad(i, 8)]
     [write(fid, UInt8(j)) for i in bdf_in.header["reserved"] for j in rpad(i, 32)]
 
