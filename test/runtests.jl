@@ -5,7 +5,7 @@ using Test
 
     bdf_filename = joinpath(dirname(@__FILE__), "Newtest17-256.bdf")
     dat = read_bdf(bdf_filename)
-    
+
     @test isequal(dat.header["num_bytes_header"], 4608)
     @test isequal(dat.header["num_channels"], 17)
     @test isequal(dat.header["num_data_records"], 60)
