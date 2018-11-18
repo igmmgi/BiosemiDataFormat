@@ -60,17 +60,17 @@ module BioSemiBDF
     duration_data_records = parse(Int, ascii(String(read!(fid, Array{UInt8}(undef, 8)))))
     num_channels = parse(Int, ascii(String(read!(fid, Array{UInt8}(undef, 4)))))
     channel_labels = [strip(ascii(String(read!(fid, Array{UInt8}(undef, 16))))) for _ in 1:num_channels]
-    transducer_type = [strip(ascii(String(read!(fid, Array{UInt8}(undef, 80))))) for _ in 1:num_channels]
-    channel_unit = [strip(ascii(String(read!(fid, Array{UInt8}(undef,  8))))) for _ in 1:num_channels]
+    transducer_type = [String(strip(ascii(String(read!(fid, Array{UInt8}(undef, 80)))))) for _ in 1:num_channels]
+    channel_unit = [String(strip(ascii(String(read!(fid, Array{UInt8}(undef,  8)))))) for _ in 1:num_channels]
     physical_min = [parse(Int, strip(ascii(String(read!(fid, Array{UInt8}(undef,  8)))))) for _ in 1:num_channels]
     physical_max = [parse(Int, strip(ascii(String(read!(fid, Array{UInt8}(undef,  8)))))) for _ in 1:num_channels]
     digital_min = [parse(Int, strip(ascii(String(read!(fid, Array{UInt8}(undef,  8)))))) for _ in 1:num_channels]
     digital_max = [parse(Int, strip(ascii(String(read!(fid, Array{UInt8}(undef,  8)))))) for _ in 1:num_channels]
-    pre_filter = [strip(ascii(String(read!(fid, Array{UInt8}(undef,  80))))) for _ in 1:num_channels]
+    pre_filter = [String(strip(ascii(String(read!(fid, Array{UInt8}(undef,  80)))))) for _ in 1:num_channels]
     num_samples = [parse(Int, strip(ascii(String(read!(fid, Array{UInt8}(undef,  8)))))) for _ in 1:num_channels]
-    reserved = [strip(ascii(String(read!(fid, Array{UInt8}(undef,  32))))) for _ in 1:num_channels]
+    reserved = [String(strip(ascii(String(read!(fid, Array{UInt8}(undef,  32)))))) for _ in 1:num_channels]
     scale_factor = convert(Array{Float32}, ((physical_max.-physical_min) ./ (digital_max.-digital_min)))
-    sample_rate = num_samples ./ duration_data_records
+    sample_rate = convert(Array{Int}, num_samples ./ duration_data_records)
 
     # create header dictionary
     header = Dict{String, Any}(
@@ -550,7 +550,7 @@ module BioSemiBDF
     channel_idx(labels_in::Array{String}, channels::Array{String})
   Return channel index given labels and desired channel labels.
   """
-  function channel_idx(labels_in::Array{SubString{String}}, channels::Array{String})
+  function channel_idx(labels_in::String, channels::Array{String})
 
     channels = [findfirst(x .== labels_in) for x in channels]
     if any(channels .== nothing)
@@ -566,7 +566,7 @@ module BioSemiBDF
     channel_idx(labels_in::Array{String}, channels::Array{Int})
   Return channel index given labels and desired channel index.
   """
-  function channel_idx(labels_in::Array{SubString{String}}, channels::Array{Int})
+  function channel_idx(labels_in::String, channels::Array{Int})
     if any(channels .> length(labels_in)) || any(channels .< 0)
       error("A requested channel number is not in the bdf file!")
     else
