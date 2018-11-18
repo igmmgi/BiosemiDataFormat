@@ -59,7 +59,7 @@ module BioSemiBDF
     num_data_records = parse(Int, strip(ascii(String(read!(fid, Array{UInt8}(undef, 8))))))
     duration_data_records = parse(Int, ascii(String(read!(fid, Array{UInt8}(undef, 8)))))
     num_channels = parse(Int, ascii(String(read!(fid, Array{UInt8}(undef, 4)))))
-    channel_labels = [strip(ascii(String(read!(fid, Array{UInt8}(undef, 16))))) for _ in 1:num_channels]
+    channel_labels = [String(strip(ascii(String(read!(fid, Array{UInt8}(undef, 16)))))) for _ in 1:num_channels]
     transducer_type = [String(strip(ascii(String(read!(fid, Array{UInt8}(undef, 80)))))) for _ in 1:num_channels]
     channel_unit = [String(strip(ascii(String(read!(fid, Array{UInt8}(undef,  8)))))) for _ in 1:num_channels]
     physical_min = [parse(Int, strip(ascii(String(read!(fid, Array{UInt8}(undef,  8)))))) for _ in 1:num_channels]
