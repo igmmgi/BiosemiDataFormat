@@ -306,7 +306,31 @@ module BioSemiBDF
     end
 
     # write data
-    data = round.(Int32, (bdf_in.data ./ bdf_in.header["scale_factor"][1:end-1]))
+    # data = round.(Int32, (bdf_in.data ./ bdf_in.header["scale_factor"][1:end-1]))
+    # trigs = bdf_in.triggers["raw"]
+    # status = bdf_in.status
+
+    # num_data_records = bdf_in.header["num_data_records"]::Int64
+    # num_samples = bdf_in.header["num_samples"][1]::Int64
+    # num_channels = bdf_in.header["num_channels"]::Int64
+
+    # bdf = data2bit24(bdf_in.data, bdf_in.header["scale_factor"][1:end-1], bdf_in.triggers["raw"], bdf_in.status, bdf_in.header["num_data_records"]::Int64, bdf_in.header["num_samples"][1]::Int64, bdf_in.header["num_channels"]::Int64)
+
+    bdf = data2bit24(bdf_in::BioSemiRawData)
+
+    write(fid, Array{UInt8}(bdf))
+    close(fid)
+
+  end
+
+  """
+    data2bit24(data, trigs, status, num_data_records, num_samples, num_channels)
+  Internal functon used within write_bdf
+  """
+
+function data2bit24(bdf_in)
+
+    data = round.(Int32, (bdf_in.data ./ bdf_in.header["scale_factor"]))
     trigs = bdf_in.triggers["raw"]
     status = bdf_in.status
 
@@ -321,8 +345,7 @@ module BioSemiBDF
       for chan = 1:num_channels
         if chan < num_channels
           for samp = 1:num_samples
-            idx = rec*num_samples + samp
-            data_val   = data[chan, idx]::Int32
+            data_val   = data[chan, rec*num_samples + samp]::Int32
             bdf[pos  ] = (data_val % UInt8)
             bdf[pos+1] = ((data_val >> 8) % UInt8)
             bdf[pos+2] = ((data_val >> 16) % UInt8)
@@ -330,9 +353,8 @@ module BioSemiBDF
           end
         else  # last channel is Status channel
           for samp = 1:num_samples
-            idx = rec*num_samples + samp
-            trig_val = trigs[idx]::Int16
-            status_val = status[idx]::Int16
+            trig_val = trigs[rec*num_samples + samp]::Int16
+            status_val = status[rec*num_samples + samp]::Int16
             bdf[pos  ] = trig_val % UInt8
             bdf[pos+1] = (trig_val >> 8) % UInt8
             bdf[pos+2] = (status_val) % UInt8
@@ -341,11 +363,41 @@ module BioSemiBDF
         end
       end
     end
-
-    write(fid, Array{UInt8}(bdf))
-    close(fid)
-
+    return bdf
   end
+
+
+  # function data2bit24(data, scale_factor, trigs, status, num_data_records, num_samples, num_channels)
+#
+  #   data = round.(Int32, (data ./ scale_factor))
+#
+  #   bdf = Array{UInt8}(undef, 3*(num_data_records*num_channels*num_samples))
+ #
+  #   pos = 1
+  #   for rec = 0:(num_data_records-1)
+  #     for chan = 1:num_channels
+  #       if chan < num_channels
+  #         for samp = 1:num_samples
+  #           data_val   = data[chan, rec*num_samples + samp]::Int32
+  #           bdf[pos  ] = (data_val % UInt8)
+  #           bdf[pos+1] = ((data_val >> 8) % UInt8)
+  #           bdf[pos+2] = ((data_val >> 16) % UInt8)
+  #           pos += 3
+  #         end
+  #       else  # last channel is Status channel
+  #         for samp = 1:num_samples
+  #           trig_val = trigs[rec*num_samples + samp]::Int16
+  #           status_val = status[rec*num_samples + samp]::Int16
+  #           bdf[pos  ] = trig_val % UInt8
+  #           bdf[pos+1] = (trig_val >> 8) % UInt8
+  #           bdf[pos+2] = (status_val) % UInt8
+  #           pos += 3
+  #         end
+  #       end
+  #     end
+  #   end
+  #   return bdf
+  # end
 
   """
     merge_bdf(bdf_in::Array{BioSemiRawData}, filename::String="merged.bdf")
