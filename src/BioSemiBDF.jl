@@ -47,7 +47,7 @@ module BioSemiBDF
 
     fid = open(filename, "r")
 
-    # header fields
+    # read header information
     id1 = read!(fid, Array{UInt8}(undef, 1))
     id2 = ascii(String(read!(fid, Array{UInt8}(undef, 7))))
     text1 = ascii(String(read!(fid, Array{UInt8}(undef, 80))))
@@ -59,55 +59,18 @@ module BioSemiBDF
     num_data_records = parse(Int, strip(ascii(String(read!(fid, Array{UInt8}(undef, 8))))))
     duration_data_records = parse(Int, ascii(String(read!(fid, Array{UInt8}(undef, 8)))))
     num_channels = parse(Int, ascii(String(read!(fid, Array{UInt8}(undef, 4)))))
-
-    channel_labels = Array{String}(undef, num_channels)
-    transducer_type = Array{String}(undef, num_channels)
-    channel_unit = Array{String}(undef, num_channels)
-    physical_min = Array{Int32}(undef, num_channels)
-    physical_max = Array{Int32}(undef, num_channels)
-    digital_min = Array{Int32}(undef, num_channels)
-    digital_max = Array{Int32}(undef, num_channels)
-    pre_filter = Array{String}(undef, num_channels)
-    num_samples = Array{Int}(undef, num_channels)
-    reserved = Array{String}(undef, num_channels)
-    scale_factor = Array{Float32}(undef, num_channels)
-    sample_rate = Array{Int}(undef, num_channels)
-
-    # read header information
-    for i = 1:num_channels
-      channel_labels[i] = strip(ascii(String(read!(fid, Array{UInt8}(undef, 16)))))
-    end
-    for i = 1:num_channels
-      transducer_type[i] = strip(ascii(String(read!(fid, Array{UInt8}(undef, 80)))))
-    end
-    for i = 1:num_channels
-      channel_unit[i] = strip(ascii(String(read!(fid, Array{UInt8}(undef, 8)))))
-    end
-    for i = 1:num_channels
-      physical_min[i] = parse(Int, strip(ascii(String(read!(fid, Array{UInt8}(undef, 8))))))
-    end
-    for i = 1:num_channels
-      physical_max[i] = parse(Int, strip(ascii(String(read!(fid, Array{UInt8}(undef, 8))))))
-    end
-    for i = 1:num_channels
-      digital_min[i] = parse(Int, strip(ascii(String(read!(fid, Array{UInt8}(undef, 8))))))
-    end
-    for i = 1:num_channels
-      digital_max[i] = parse(Int, strip(ascii(String(read!(fid, Array{UInt8}(undef, 8))))))
-    end
-    for i = 1:num_channels
-      pre_filter[i] = strip(ascii(String(read!(fid, Array{UInt8}(undef, 80)))))
-    end
-    for i = 1:num_channels
-      num_samples[i] = parse(Int, ascii(String(read!(fid, Array{UInt8}(undef, 8)))))
-    end
-    for i = 1:num_channels
-      reserved[i] = strip(ascii(String(read!(fid, Array{UInt8}(undef, 32)))))
-    end
-    for i = 1:num_channels
-      scale_factor[i] = Float32(physical_max[i]-physical_min[i])/ (digital_max[i]-digital_min[i])
-      sample_rate[i] = num_samples[i]/duration_data_records
-    end
+    channel_labels = [strip(ascii(String(read!(fid, Array{UInt8}(undef, 16))))) for _ in 1:num_channels]
+    transducer_type = [strip(ascii(String(read!(fid, Array{UInt8}(undef, 80))))) for _ in 1:num_channels]
+    channel_unit = [strip(ascii(String(read!(fid, Array{UInt8}(undef,  8))))) for _ in 1:num_channels]
+    physical_min = [parse(Int, strip(ascii(String(read!(fid, Array{UInt8}(undef,  8)))))) for _ in 1:num_channels]
+    physical_max = [parse(Int, strip(ascii(String(read!(fid, Array{UInt8}(undef,  8)))))) for _ in 1:num_channels]
+    digital_min = [parse(Int, strip(ascii(String(read!(fid, Array{UInt8}(undef,  8)))))) for _ in 1:num_channels]
+    digital_max = [parse(Int, strip(ascii(String(read!(fid, Array{UInt8}(undef,  8)))))) for _ in 1:num_channels]
+    pre_filter = [strip(ascii(String(read!(fid, Array{UInt8}(undef,  80))))) for _ in 1:num_channels]
+    num_samples = [parse(Int, strip(ascii(String(read!(fid, Array{UInt8}(undef,  8)))))) for _ in 1:num_channels]
+    reserved = [strip(ascii(String(read!(fid, Array{UInt8}(undef,  32))))) for _ in 1:num_channels]
+    scale_factor = convert(Array{Float32}, ((physical_max.-physical_min) ./ (digital_max.-digital_min)))
+    sample_rate = num_samples ./ duration_data_records
 
     # create header dictionary
     header = Dict{String, Any}(
