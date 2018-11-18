@@ -213,9 +213,13 @@ module BioSemiBDF
   dat1 = read_bdf("filename1.bdf")
   write_bdf(dat1)
   """
-  function write_bdf(bdf_in::BioSemiRawData)
+  function write_bdf(bdf_in::BioSemiRawData, filename::String="")
 
-    fid = open(bdf_in.header["filename"], "w")
+    if isempty(filename)
+      fid = open(bdf_in.header["filename"], "w")
+    else
+      fid = open(filename, "w")
+    end
 
     # id1 1 byte
     write(fid, 0xff)
@@ -316,7 +320,8 @@ module BioSemiBDF
       for chan = 1:num_channels
         if chan < num_channels
           for samp = 1:num_samples
-            data_val = data[chan, rec*num_samples + samp]::Int32
+            idx = rec*num_samples + samp
+            data_val   = data[chan, idx]::Int32
             bdf[pos  ] = (data_val % UInt8)
             bdf[pos+1] = ((data_val >> 8) % UInt8)
             bdf[pos+2] = ((data_val >> 16) % UInt8)
@@ -324,8 +329,9 @@ module BioSemiBDF
           end
         else  # last channel is Status channel
           for samp = 1:num_samples
-            trig_val = trigs[rec*num_samples + samp]::Int16
-            status_val = status[rec*num_samples + samp]::Int16
+            idx = rec*num_samples + samp
+            trig_val = trigs[idx]::Int16
+            status_val = status[idx]::Int16
             bdf[pos  ] = trig_val % UInt8
             bdf[pos+1] = (trig_val >> 8) % UInt8
             bdf[pos+2] = (status_val) % UInt8
@@ -445,10 +451,6 @@ module BioSemiBDF
        error("val should be of length 2")
      end
 
-     if filename == "crop.bdf"
-       @warn "Using crop.bdf as filename"
-     end
-
      sample_rate = bdf_in.header["sample_rate"][1]
      if crop_type == "triggers"
 
@@ -460,8 +462,8 @@ module BioSemiBDF
 
        # need to find boundardy equal to record breaks
        borders  = collect(1:sample_rate:size(bdf_in.data, 2))
-       idxStart =  findlast(borders  .<= idxStart) * sample_rate
-       idxEnd   = (findfirst(borders .>= idxEnd)   * sample_rate) - 1
+       idxStart =  findfirst(borders .>= idxStart) * sample_rate
+       idxEnd   = (findlast(borders  .<= idxEnd)   * sample_rate) - 1
 
      elseif crop_type == "records"
 
@@ -480,7 +482,7 @@ module BioSemiBDF
      bdf_out.header["filename"] = filename
      bdf_out.header["num_data_records"] = (idxEnd - idxStart) * sample_rate
      bdf_out.data = bdf_out.data[:, idxStart:idxEnd]
-     bdf_out.time = collect(0:size(bdf_out.data, 2) -1) / bdf_in[1].header["sample_rate"][1]
+     bdf_out.time = collect(0:size(bdf_out.data, 2) -1) / bdf_out.header["sample_rate"][1]
 
      # update triggers
      bdf_out.triggers["raw"] = bdf_out.triggers["raw"][idxStart:idxEnd]
