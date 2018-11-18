@@ -195,90 +195,28 @@ module BioSemiBDF
       fid = open(filename, "w")
     end
 
-    # id1 1 byte
     write(fid, 0xff)
-    # id2 7 bytes
-    for i in bdf_in.header["id2"]
-      write(fid, UInt8(i))
-    end
-    # text1 80 bytes
-    for i in bdf_in.header["text1"]
-      write(fid, UInt8(i))
-    end
-    # text2 80 bytes
-    for i in bdf_in.header["text2"]
-      write(fid, UInt8(i))
-    end
-    # start_date 8 bytes
-    for i in bdf_in.header["start_date"]
-      write(fid, UInt8(i))
-    end
-    # start_time 8 bytes
-    for i in bdf_in.header["start_time"]
-      write(fid, UInt8(i))
-    end
-    # num_bytes_header 8 bytes
-    for i in rpad(string(bdf_in.header["num_bytes_header"]), 8)
-      write(fid, UInt8(i))
-    end
-    # data_format 44 bytes
-    for i in rpad(bdf_in.header["data_format"], 44)
-      write(fid, UInt8(i))
-    end
-    # num_data_records 8 bytes
-    for i in rpad(string(bdf_in.header["num_data_records"]), 8)
-      write(fid, UInt8(i))
-    end
-    # duration_data_records 8 bytes
-    for i in rpad(string(bdf_in.header["duration_data_records"]), 8)
-      write(fid, UInt8(i))
-    end
-    # num_channels 4 bytes
-    for i in rpad(string(bdf_in.header["num_channels"]), 4)
-      write(fid, UInt8(i))
-    end
-    # channel_labels 16 bytes
-    for i in bdf_in.header["channel_labels"], j in rpad(i, 16)
-      write(fid, UInt8(j))
-    end
-    # transducer_type 80 bytes
-    for i in bdf_in.header["transducer_type"], j in rpad(i, 80)
-      write(fid, UInt8(j))
-    end
-    # channel unit 8 bytes
-    for i in bdf_in.header["channel_unit"], j in rpad(i, 8)
-      write(fid, UInt8(j))
-    end
-    # physical min 8 bytes
-    for i in bdf_in.header["physical_min"], j in rpad(i, 8)
-      write(fid, UInt8(j))
-    end
-    # physical max 8 bytes
-    for i in bdf_in.header["physical_max"], j in rpad(i, 8)
-      write(fid, UInt8(j))
-    end
-    # digital min 8 bytes
-    for i in bdf_in.header["digital_min"], j in rpad(i, 8)
-      write(fid, UInt8(j))
-    end
-    # digital max 8 bytes
-    for i in bdf_in.header["digital_max"], j in rpad(i, 8)
-      write(fid, UInt8(j))
-    end
-    # pre filter 80 bytes
-    for i in bdf_in.header["pre_filter"], j in rpad(i, 80)
-      write(fid, UInt8(j))
-    end
-    # num_samples
-    for i in bdf_in.header["num_samples"], j in rpad(i, 8)
-      write(fid, UInt8(j))
-    end
-    # reserved 32 bytes
-    for i in bdf_in.header["reserved"], j in rpad(i, 32)
-      write(fid, UInt8(j))
-    end
+    [write(fid, UInt8(i)) for i in bdf_in.header["id2"]]
+    [write(fid, UInt8(i)) for i in bdf_in.header["text1"]]
+    [write(fid, UInt8(i)) for i in bdf_in.header["text2"]]
+    [write(fid, UInt8(i)) for i in bdf_in.header["start_date"]]
+    [write(fid, UInt8(i)) for i in bdf_in.header["start_time"]]
+    [write(fid, UInt8(i)) for i in rpad(string(bdf_in.header["num_bytes_header"]), 8)]
+    [write(fid, UInt8(i)) for i in rpad(bdf_in.header["num_bytes_header"], 44)]
+    [write(fid, UInt8(i)) for i in rpad(string(bdf_in.header["num_data_records"]), 8)]
+    [write(fid, UInt8(i)) for i in rpad(string(bdf_in.header["duration_data_records"]), 8)]
+    [write(fid, UInt8(i)) for i in rpad(string(bdf_in.header["num_channels"]), 4)]
+    [write(fid, UInt8(j)) for i in bdf_in.header["channel_labels"], j in rpad(i, 16)]
+    [write(fid, UInt8(j)) for i in bdf_in.header["transducer_type"], j in rpad(i, 80)]
+    [write(fid, UInt8(j)) for i in bdf_in.header["channel_unit"], j in rpad(i, 8)]
+    [write(fid, UInt8(j)) for i in bdf_in.header["physical_min"], j in rpad(i, 8)]
+    [write(fid, UInt8(j)) for i in bdf_in.header["physical_max"], j in rpad(i, 8)]
+    [write(fid, UInt8(j)) for i in bdf_in.header["digital_min"], j in rpad(i, 8)]
+    [write(fid, UInt8(j)) for i in bdf_in.header["digital_max"], j in rpad(i, 8)]
+    [write(fid, UInt8(j)) for i in bdf_in.header["prefilter"], j in rpad(i, 80)]
+    [write(fid, UInt8(j)) for i in bdf_in.header["num_samples"], j in rpad(i, 8)]
+    [write(fid, UInt8(j)) for i in bdf_in.header["reserved"], j in rpad(i, 32)]
 
-    # write data
     data             = round.(Int32, (bdf_in.data ./ bdf_in.header["scale_factor"][1:end-1]))
     scale_factor     = bdf_in.header["scale_factor"][1:end-1]
     trigs            = bdf_in.triggers["raw"]
