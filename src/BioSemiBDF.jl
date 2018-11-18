@@ -208,7 +208,9 @@ module BioSemiBDF
     [write(fid, UInt8(i)) for i in rpad(string(bdf_in.header["num_channels"]), 4)]
 
 
-    [write(fid, UInt8(j)) for i in bdf_in.header["channel_labels"] for j rpad(i, 16)]
+    # [write(fid, UInt8(j)) for rpad(i, 16) in bdf_in.header["channel_labels"] for j rpad(i, 16)]
+
+    [write(fid, UInt8(j)) for i in bdf_in.header["channel_labels"] for j in rpad(i, 16)]
     [write(fid, UInt8(j)) for i in bdf_in.header["transducer_type"] for j in rpad(i, 80)]
     [write(fid, UInt8(j)) for i in bdf_in.header["channel_unit"] for j in rpad(i, 8)]
     [write(fid, UInt8(j)) for i in bdf_in.header["physical_min"] for j in rpad(i, 8)]
