@@ -211,9 +211,7 @@ module BioSemiBDF
     [write(fid, UInt8(j)) for i in bdf_in.header["num_samples"] for j in rpad(i, 8)]
     [write(fid, UInt8(j)) for i in bdf_in.header["reserved"] for j in rpad(i, 32)]
 
-    # write data
     data             = round.(Int32, (bdf_in.data ./ bdf_in.header["scale_factor"][1:end-1]))
-    scale_factor     = bdf_in.header["scale_factor"][1:end-1]
     trigs            = bdf_in.triggers["raw"]
     status           = bdf_in.status
     num_data_records = bdf_in.header["num_data_records"]
@@ -259,9 +257,7 @@ module BioSemiBDF
         end
       end
     end
-
     return bdf
-
   end
 
 
@@ -279,15 +275,11 @@ module BioSemiBDF
   """
   function merge_bdf(bdf_in::Array{BioSemiRawData}, filename::String)
 
-    # check data structs to merge have same number of channels
+    # check data structs to merge have same number of channels, channel labels + sample rate
     num_chans = (x -> x.header["num_channels"]).(bdf_in)
     !all(x -> x == num_chans[1], num_chans) && error("Different number of channels in bdf_in")
-
-    # check data structs to merge have same channel labels
     chan_labels = (x -> x.header["channel_labels"]).(bdf_in)
     !all(y -> y == chan_labels[1], chan_labels) && error("Different channel labels bdf_in")
-
-    # check data structs to merge have same sample rate
     sample_rate = (x -> x.header["sample_rate"]).(bdf_in)
     !all(y -> y == sample_rate[1], sample_rate) && error("Different sample rate in bdf_in")
 
@@ -397,38 +389,37 @@ module BioSemiBDF
 
 
   """
-    downsample_bdf(bdf_in::BioSemiRawData, dec_factor::Int, filename::String)
-  Reduce the sampling rate within a BioSemiRawData struct by an integer factor (dec_factor).
+    downsample_bdf(bdf_in::BioSemiRawData, dec::Int, filename::String)
+  Reduce the sampling rate within a BioSemiRawData struct by an integer factor (dec).
   ### Examples:
   ```julia
   dat1 = read_bdf("filename1.bdf")
   dat2 = downsample_bdf(dat1, 2, "filename1_downsampled.bdf")
   ```
   """
-  function downsample_bdf(bdf_in::BioSemiRawData, dec_factor::Int, filename::String)
+  # TO DO: make separate mirror function
+  function downsample_bdf(bdf_in::BioSemiRawData, dec::Int, filename::String)
 
-    !ispow2(dec_factor) && error("dec_factor should be power of 2!")
+    !ispow2(dec) && error("dec should be power of 2!")
 
-    mirror_samples = dec_factor * 20  # enough samples?
-    mirror_dec = div(mirror_samples, dec_factor)
+    nsamp = dec * 20  # enough samples?
+    ndec = div(nsamp, dec)
 
     bdf_out = deepcopy(bdf_in)
-    data = Matrix{Float32}(undef, size(bdf_out.data, 1), div(size(bdf_out.data, 2), dec_factor))
+    data = Matrix{Float32}(undef, size(bdf_out.data, 1), div(size(bdf_out.data, 2), dec))
     for i in 1:size(bdf_out.data, 1)
-      # tmp_dat    = hcat(bdf_out.data[i, mirror_samples:-1:1]', bdf_out.data[i, :]', bdf_out.data[i, end:-1:end-(mirror_samples-1)]')
-      # tmp_dat    = [reverse(bdf_out.data[i, 1:mirror_samples]); bdf_out.data[i, :]; reverse(bdf_out.data[i, end-(mirror_samples-1):end])]
-      tmp_dat    = resample([reverse(bdf_out.data[i, 1:mirror_samples]); bdf_out.data[i, :]; reverse(bdf_out.data[i, end-(mirror_samples-1):end])], (1/dec_factor))
-      data[i, :] = convert(Array{Float32}, transpose(tmp_dat[mirror_dec+1:end-mirror_dec]))
+      tmp_dat    = resample([reverse(bdf_out.data[i, 1:nsamp]); bdf_out.data[i, :]; reverse(bdf_out.data[i, end-(nsamp-1):end])], 1/dec)
+      data[i, :] = convert(Array{Float32}, tmp_dat[ndec+1:end-ndec])
     end
     bdf_out.data = data
 
-    bdf_out.header["sample_rate"] = div.(bdf_out.header["sample_rate"], dec_factor)
-    bdf_out.header["sample_rate"] = div.(bdf_out.header["num_samples"], dec_factor)
+    bdf_out.header["sample_rate"] = div.(bdf_out.header["sample_rate"], dec)
+    bdf_out.header["num_samples"] = div.(bdf_out.header["num_samples"], dec)
     bdf_out.time = collect(0:size(bdf_out.data, 2) -1) / bdf_out.header["sample_rate"][1]
 
     # update triggers
     bdf_out.triggers["raw"] = zeros(Int16, 1, size(bdf_out.data, 2))
-    bdf_out.triggers["idx"] = convert(Array{Int64}, round.(bdf_out.triggers["idx"] / dec_factor))
+    bdf_out.triggers["idx"] = convert(Array{Int64}, round.(bdf_out.triggers["idx"] / dec))
     bdf_out.triggers["raw"][bdf_out.triggers["idx"]] = bdf_out.triggers["val"]
 
     return bdf_out
@@ -457,28 +448,26 @@ module BioSemiBDF
     header["num_bytes_header"] = (length(channels)+1) * 256
   end
 
-
   """
-    channel_idx(labels_in::Array{String}, channels::Array{String})
-  Return channel index given labels and desired channel labels.
+    channel_idx(labels::Array{String}, select::Array{String})
+  Return channel index given labels and desired selection.
   """
-  function channel_idx(labels_in::Array{String}, channels::Array{String})
-    channels = [findfirst(x .== labels_in) for x in channels]
-    any(channels .== nothing) && error("A requested channel label is not in the bdf file!")
-    println("Selecting channels:", labels_in[channels])
-    return unique(append!(channels, length(labels_in)))
+  function channel_idx(labels::Array{String}, select::Array{String})
+    select = [findfirst(x .== labels) for x in select]
+    any(select .== nothing) && error("A requested channel label is not in the bdf file!")
+    println("Selecting channels:", labels[select])
+    return unique(append!(select, length(labels)))
   end
 
-
   """
-    channel_idx(labels_in::Array{String}, channels::Array{Int})
-  Return channel index given labels and desired channel index.
+    channel_idx(labels::Array{String}, channels::Array{Int})
+  Return channel index given labels and desired selection.
   """
-  function channel_idx(labels_in::Array{String}, channels::Array{Int})
-    any(channels .> length(labels_in)) && error("Requested channel number greater than number of channels in file!")
-    any(channels .< 1)                 && error("Requested channel number less than 1!")
-    println("Selecting channels:", labels_in[channels])
-    return unique(append!(channels, length(labels_in)))
+  function channel_idx(labels::Array{String}, select::Array{Int})
+    any(select .> length(labels)) && error("Requested channel number greater than number of channels in file!")
+    any(select .< 1)              && error("Requested channel number less than 1!")
+    println("Selecting channels:", labels[select])
+    return unique(append!(select, length(labels)))
   end
 
 end
