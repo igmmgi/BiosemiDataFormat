@@ -99,9 +99,7 @@ module BioSemiBDF
     "scale_factor"          => scale_factor,
     "sample_rate"           => sample_rate
     )
-    if header_only
-      return header
-    end
+    header_only && return header
 
     if !isempty(channels)  # specific channel labels/numbers given
       channels = channel_idx(header["channel_labels"], channels)
@@ -189,11 +187,7 @@ module BioSemiBDF
   """
   function write_bdf(bdf_in::BioSemiRawData, filename::String="")
 
-    if isempty(filename)
-      fid = open(bdf_in.header["filename"], "w")
-    else
-      fid = open(filename, "w")
-    end
+    isempty(filename) ? fid = open(bdf_in.header["filename"], "w") : fid = open(filename, "w")
 
     write(fid, 0xff)
     [write(fid, UInt8(i)) for i in bdf_in.header["id2"]]
@@ -206,10 +200,6 @@ module BioSemiBDF
     [write(fid, UInt8(i)) for i in rpad(string(bdf_in.header["num_data_records"]), 8)]
     [write(fid, UInt8(i)) for i in rpad(string(bdf_in.header["duration_data_records"]), 8)]
     [write(fid, UInt8(i)) for i in rpad(string(bdf_in.header["num_channels"]), 4)]
-
-
-    # [write(fid, UInt8(j)) for rpad(i, 16) in bdf_in.header["channel_labels"] for j rpad(i, 16)]
-
     [write(fid, UInt8(j)) for i in bdf_in.header["channel_labels"] for j in rpad(i, 16)]
     [write(fid, UInt8(j)) for i in bdf_in.header["transducer_type"] for j in rpad(i, 80)]
     [write(fid, UInt8(j)) for i in bdf_in.header["channel_unit"] for j in rpad(i, 8)]
@@ -293,21 +283,15 @@ module BioSemiBDF
 
     # check data structs to merge have same number of channels
     num_chans = (x -> x.header["num_channels"]).(bdf_in)
-    if !all(x -> x == num_chans[1], num_chans)
-      error("Different number of channels in bdf_in")
-    end
+    !all(x -> x == num_chans[1], num_chans) && error("Different number of channels in bdf_in")
 
     # check data structs to merge have same channel labels
     chan_labels = (x -> x.header["channel_labels"]).(bdf_in)
-    if !all(y -> y == chan_labels[1], chan_labels)
-      error("Different channel labels bdf_in")
-    end
+    !all(y -> y == chan_labels[1], chan_labels) && error("Different channel labels bdf_in")
 
     # check data structs to merge have same sample rate
     sample_rate = (x -> x.header["sample_rate"]).(bdf_in)
-    if !all(y -> y == sample_rate[1], sample_rate)
-      error("Different sample rate in bdf_in")
-    end
+    !all(y -> y == sample_rate[1], sample_rate) && error("Different sample rate in bdf_in")
 
     # make copy so that bdf_in is not altered
     bdf_out = deepcopy(bdf_in[1])
@@ -349,16 +333,11 @@ module BioSemiBDF
   ```
   """
   function select_channels_bdf(bdf_in::BioSemiRawData, channels::Union{Array{Int}, Array{String}})
-
     bdf_out = deepcopy(bdf_in)
-
     channels = channel_idx(bdf_out.header["channel_labels"], channels)
     update_header_bdf!(bdf_out.header, channels)
-
     bdf_out.data = bdf_out.data[channels[1:end-1], :]
-
     return bdf_out
-
   end
 
 
@@ -377,9 +356,7 @@ module BioSemiBDF
   """
   function crop_bdf(bdf_in::BioSemiRawData, crop_type::String, val::Array{Int}, filename::String)
 
-    if length(val) != 2
-      error("val should be of length 2")
-    end
+    length(val) != 2 && error("val should be of length 2")
 
     sample_rate = bdf_in.header["sample_rate"][1]
     if crop_type == "triggers"
@@ -438,9 +415,8 @@ module BioSemiBDF
   """
   function downsample_bdf(bdf_in::BioSemiRawData, dec_factor::Int, filename::String)
 
-    if !ispow2(dec_factor)
-      error("dec_factor should be power of 2!")
-    end
+    !ispow2(dec_factor) && error("dec_factor should be power of 2!")
+
     mirror_samples = dec_factor * 20  # enough samples?
     mirror_dec = div(mirror_samples, dec_factor)
 
@@ -494,13 +470,9 @@ module BioSemiBDF
   Return channel index given labels and desired channel labels.
   """
   function channel_idx(labels_in::Array{String}, channels::Array{String})
-
     channels = [findfirst(x .== labels_in) for x in channels]
-    if any(channels .== nothing)
-      error("A requested channel label is not in the bdf file!")
-    else
-      println("Selecting channels:", labels_in[channels])
-    end
+    any(channels .== nothing) && error("A requested channel label is not in the bdf file!")
+    println("Selecting channels:", labels_in[channels])
     return unique(append!(channels, length(labels_in)))
   end
 
@@ -510,11 +482,9 @@ module BioSemiBDF
   Return channel index given labels and desired channel index.
   """
   function channel_idx(labels_in::Array{String}, channels::Array{Int})
-    if any(channels .> length(labels_in)) || any(channels .< 0)
-      error("A requested channel number is not in the bdf file!")
-    else
-      println("Selecting channels:", labels_in[channels])
-    end
+    any(channels .> length(labels_in)) && error("Requested channel number greater than number of channels in file!")
+    any(channels .< 1)                 && error("Requested channel number less than 1!")
+    println("Selecting channels:", labels_in[channels])
     return unique(append!(channels, length(labels_in)))
   end
 
