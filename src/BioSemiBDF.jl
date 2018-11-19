@@ -22,8 +22,7 @@ module BioSemiBDF
 
 
   """
-  read_bdf(filename::String; header_only::Bool=false, channels::Union{Array{Any}, Array{Int}, Array{String}}=[])
-
+    read_bdf(filename::String; header_only::Bool=false, channels::Union{Array{Any}, Array{Int}, Array{String}}=[])
   Reads BioSemi Data Format (bdf) files.
   See https://www.biosemi.com/faq_file_format.htm for file format details.
   ### Inputs:
@@ -41,7 +40,9 @@ module BioSemiBDF
   ### Examples:
   ```julia
   dat1 = read_bdf("filename1.bdf")
-  write_bdf(dat3)
+  dat1 = read_bdf("filename1.bdf", header_only = true)
+  dat1 = read_bdf("filename1.bdf", channels = [1,3,5])
+  dat1 = read_bdf("filename1.bdf", channels = ["Fp1", "Cz"])
   ```
   """
   function read_bdf(filename::String; header_only::Bool=false, channels::Union{Array{Any}, Array{Int}, Array{String}}=[])
@@ -60,7 +61,6 @@ module BioSemiBDF
     num_data_records = parse(Int, strip(ascii(String(read!(fid, Array{UInt8}(undef, 8))))))
     duration_data_records = parse(Int, ascii(String(read!(fid, Array{UInt8}(undef, 8)))))
     num_channels = parse(Int, ascii(String(read!(fid, Array{UInt8}(undef, 4)))))
-    channel_labels = [String(strip(ascii(String(read!(fid, Array{UInt8}(undef, 16)))))) for _ in 1:num_channels]
     transducer_type = [String(strip(ascii(String(read!(fid, Array{UInt8}(undef, 80)))))) for _ in 1:num_channels]
     channel_unit = [String(strip(ascii(String(read!(fid, Array{UInt8}(undef,  8)))))) for _ in 1:num_channels]
     physical_min = [parse(Int, strip(ascii(String(read!(fid, Array{UInt8}(undef,  8)))))) for _ in 1:num_channels]
@@ -133,8 +133,9 @@ module BioSemiBDF
 
   end
 
+
   """
-  bdf2mat(bdf, num_channels, channels, scale_factor, num_data_records, num_samples)
+    bdf2mat(bdf, num_channels, channels, scale_factor, num_data_records, num_samples)
   Internal functon used within read_bdf to read BioSemi 24bit data representation
   into julia data array/matrix
   """
@@ -173,14 +174,11 @@ module BioSemiBDF
 
 
   """
-  write_bdf(bdf_in::BioSemiRawData)
-
+    write_bdf(bdf_in::BioSemiRawData)
   Write BioSemiRaw structs to *.bdf file.
   See https://www.biosemi.com/faq_file_format.htm for file format details.
-
   ### Inputs:
   * BioSemiRawData struct
-
   ### Examples:
   ```julia
   dat1 = read_bdf("filename1.bdf")
@@ -230,7 +228,7 @@ module BioSemiBDF
 
 
   """
-  mat2bdf(data, trigs, status, num_data_records, num_samples, num_channels)
+    mat2bdf(data, trigs, status, num_data_records, num_samples, num_channels)
   Internal functon used within write_bdf to write Julia BioSemiBDF data matrix
   to bdf 24bit file format.
   """
@@ -267,12 +265,10 @@ module BioSemiBDF
 
 
   """
-  merge_bdf(bdf_in::Array{BioSemiRawData}, filename::String="merged.bdf")
-
+    merge_bdf(bdf_in::Array{BioSemiRawData}, filename::String="merged.bdf")
   Merge BioSemiRaw structs to single BioSemiRaw struct. Checks that the
     input BioSemiRaw structs have the same number of channels, same channel
     labels and that each channel has the same sample rate.
-
   ### Examples:
   ```julia
   dat1 = read_bdf("filename1.bdf")
@@ -322,10 +318,8 @@ module BioSemiBDF
 
   """
     select_channels_bdf(bdf_in::BioSemiRawData, channels::Union{Array{Int}, Array{String}})
-
   Select specific channels from BioSemiRawData struct. Channels can be specified
     using channel numbers or channel labels.
-
   ### Examples:
   ```julia
   dat1 = read_bdf("filename1.bdf")
@@ -344,10 +338,8 @@ module BioSemiBDF
 
   """
     crop_bdf(bdf_in::BioSemiRawData, crop_type::tString, val::Array{Int}, filename::String)
-
   Recuce the length of the recorded data. The border upon which to crop the bdf file can be defined using either
   a start and end trigger ("triggers") or a start and end record ("records").
-
   ### Examples:
   ```julia
   dat1 = read_bdf("filename1.bdf")
@@ -405,9 +397,7 @@ module BioSemiBDF
 
   """
     downsample_bdf(bdf_in::BioSemiRawData, dec_factor::Int, filename::String)
-
   Reduce the sampling rate within a BioSemiRawData struct by an integer factor (dec_factor).
-
   ### Examples:
   ```julia
   dat1 = read_bdf("filename1.bdf")
@@ -424,8 +414,9 @@ module BioSemiBDF
     bdf_out = deepcopy(bdf_in)
     data = Matrix{Float32}(undef, size(bdf_out.data, 1), div(size(bdf_out.data, 2), dec_factor))
     for i in 1:size(bdf_out.data, 1)
-      tmp_dat    = hcat(bdf_out.data[i, mirror_samples:-1:1]', bdf_out.data[i, :]', bdf_out.data[i, end:-1:end-(mirror_samples-1)]')
-      tmp_dat    = resample(tmp_dat',  (1/dec_factor))
+      # tmp_dat    = hcat(bdf_out.data[i, mirror_samples:-1:1]', bdf_out.data[i, :]', bdf_out.data[i, end:-1:end-(mirror_samples-1)]')
+      # tmp_dat    = [reverse(bdf_out.data[i, 1:mirror_samples]); bdf_out.data[i, :]; reverse(bdf_out.data[i, end-(mirror_samples-1):end])]
+      tmp_dat    = resample([reverse(bdf_out.data[i, 1:mirror_samples]); bdf_out.data[i, :]; reverse(bdf_out.data[i, end-(mirror_samples-1):end])], (1/dec_factor))
       data[i, :] = convert(Array{Float32}, transpose(tmp_dat[mirror_dec+1:end-mirror_dec]))
     end
     bdf_out.data = data
