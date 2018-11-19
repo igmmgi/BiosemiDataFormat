@@ -20,6 +20,7 @@ module BioSemiBDF
     status::Array
   end
 
+
   """
   read_bdf(filename::String; header_only::Bool=false, channels::Union{Array{Any}, Array{Int}, Array{String}}=[])
 
