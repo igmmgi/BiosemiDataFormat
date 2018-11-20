@@ -430,7 +430,7 @@ module BioSemiBDF
   channel_idx(labels::Array{String}, channels::Array{String})
   Return channel index given labels and desired selection.
   """
-  function channel_idx(labels::Array{String}, select::Array{String})
+  function channel_idx(labels::Array{String}, channels::Array{String})
     channels = [findfirst(x .== labels) for x in channels]
     any(channels .== nothing) && error("A requested channel label is not in the bdf file!")
     println("Selecting channels:", labels[channels])
