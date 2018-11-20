@@ -106,7 +106,7 @@ module BioSemiBDF
     "idx"   => trig_idx,
     "val"   => trig_val,
     "count" => sort(countmap(trig_val)),
-    "time"  => hcat(trig_val, pushfirst!(diff(trig_idx), 0) / header["sample_rate"][1])
+    "time"  => hcat(trig_val, pushfirst!(diff(trig_idx), 0) / hd["sample_rate"][1])
     )
 
     return BioSemiRawData(hd, dat_chans, time, triggers, status_chan)
