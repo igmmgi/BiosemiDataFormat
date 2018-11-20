@@ -149,7 +149,7 @@ module BioSemiBDF
     end
     time = collect(0:size(dat_chans, 2) - 1) / sample_rate[1]
 
-    return dat_chans, trig_chan, status_chan
+    return dat_chans, time, trig_chan, status_chan
 
   end
 
