@@ -91,7 +91,7 @@ module BioSemiBDF
       channels = channel_idx(header["channel_labels"], channels)
       update_header_bdf!(header, channels)
     else
-      channels = 1:num_channels
+      channels = 1:hd["num_channels"]
     end
 
     dat, time, trig, status = bdf2matrix(bdf, hd["num_channels"], channels, hd["scale_factor"], hd["num_data_records"], hd["num_samples"], hd["sample_rate"])
