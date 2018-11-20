@@ -89,6 +89,7 @@ module BioSemiBDF
 
     if !isempty(channels)  # specific channel labels/numbers given
       channels = channel_idx(hd["channel_labels"], channels)
+      println(channels)
       update_header_bdf!(hd, channels)
     else
       channels = 1:hd["num_channels"]
@@ -407,25 +408,25 @@ module BioSemiBDF
   end
 
   """
-    update_header_bdf(bdf_in::BioSemiRawData, channels::Array{Int})
+  update_header_bdf(hd::Dict, channels::Array{Int})
   Updates header Dict within BioSemiRawData struct following the selection
   of specific channels in read_bdf or select_channels_bdf.
   """
-  function update_header_bdf!(header::Dict, channels::Array{Int})
-    header["num_channels"]     = length(channels)
-    header["physical_min"]     = header["physical_min"][channels]
-    header["physical_max"]     = header["physical_max"][channels]
-    header["digital_min"]      = header["digital_min"][channels]
-    header["digital_max"]      = header["digital_max"][channels]
-    header["scale_factor"]     = header["scale_factor"][channels]
-    header["transducer_type"]  = header["transducer_type"][channels]
-    header["num_samples"]      = header["num_samples"][channels]
-    header["channel_unit"]     = header["channel_unit"][channels]
-    header["reserved"]         = header["reserved"][channels]
-    header["sample_rate"]      = header["sample_rate"][channels]
-    header["channel_labels"]   = header["channel_labels"][channels]
-    header["pre_filter"]       = header["pre_filter"][channels]
-    header["num_bytes_header"] = (length(channels)+1) * 256
+  function update_header_bdf!(hd::Dict, channels::Array{Int})
+    hd["num_channels"]     = length(channels)
+    hd["physical_min"]     = hd["physical_min"][channels]
+    hd["physical_max"]     = hd["physical_max"][channels]
+    hd["digital_min"]      = hd["digital_min"][channels]
+    hd["digital_max"]      = hd["digital_max"][channels]
+    hd["scale_factor"]     = hd["scale_factor"][channels]
+    hd["transducer_type"]  = hd["transducer_type"][channels]
+    hd["num_samples"]      = hd["num_samples"][channels]
+    hd["channel_unit"]     = hd["channel_unit"][channels]
+    hd["reserved"]         = hd["reserved"][channels]
+    hd["sample_rate"]      = hd["sample_rate"][channels]
+    hd["channel_labels"]   = hd["channel_labels"][channels]
+    hd["pre_filter"]       = hd["pre_filter"][channels]
+    hd["num_bytes_header"] = (length(channels)+1) * 256
   end
 
   """
