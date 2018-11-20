@@ -89,13 +89,12 @@ module BioSemiBDF
 
     if !isempty(channels)  # specific channel labels/numbers given
       channels = channel_idx(hd["channel_labels"], channels)
-      println(channels)
-      update_header_bdf!(hd, channels)
     else
       channels = 1:hd["num_channels"]
     end
 
     dat, time, trig, status = bdf2matrix(bdf, hd["num_channels"], channels, hd["scale_factor"], hd["num_data_records"], hd["num_samples"], hd["sample_rate"])
+    update_header_bdf!(hd, channels)
 
     # events
     trig_idx = findall(diff(trig) .>= 1) .+ 1
