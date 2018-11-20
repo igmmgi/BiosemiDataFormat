@@ -81,7 +81,7 @@ module BioSemiBDF
     "sample_rate"  => convert(Array{Int}, hd2["num_samples"] ./ hd1["duration_data_records"])
     )
     hd = merge(hd1, hd2, hd3)
-    header_only && return hd1
+    header_only && return hd
 
     # read data
     bdf = read!(fid, Array{UInt8}(undef, 3*(hd["num_data_records"]*hd["num_channels"]*hd["num_samples"][1])))
