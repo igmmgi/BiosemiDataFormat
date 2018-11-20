@@ -12,7 +12,7 @@ module BioSemiBDF
   read_bdf,
   write_bdf
 
-  mutable struct BioSemi
+  mutable struct BioSemiRawData
     header::Dict
     data::Matrix
     time::Array
@@ -31,7 +31,7 @@ module BioSemiBDF
   * header_only Bool=false
   * channels Array Int/String
   ### Outputs:
-  * BioSemi struct with the following fields
+  * BioSemiRawData struct with the following fields
   * header Dict
   * data (channels * samples) Matrix
   * time
@@ -49,67 +49,88 @@ module BioSemiBDF
 
     fid = open(filename, "r")
 
-    # create header dictionary
-    hd1 = Dict{String, Any}(
-    "filename"              => filename,
-    "id1"                   => read!(fid, Array{UInt8}(undef, 1)),
-    "id2"                   => ascii(String(read!(fid, Array{UInt8}(undef, 7)))),
-    "text1"                 => ascii(String(read!(fid, Array{UInt8}(undef, 80)))),
-    "text2"                 => ascii(String(read!(fid, Array{UInt8}(undef, 80)))),
-    "start_date"            => ascii(String(read!(fid, Array{UInt8}(undef, 8)))),
-    "start_time"            => ascii(String(read!(fid, Array{UInt8}(undef, 8)))),
-    "num_bytes_header"      => parse(Int, strip(ascii(String(read!(fid, Array{UInt8}(undef, 8)))))),
-    "data_format"           => strip(ascii(String(read!(fid, Array{UInt8}(undef, 44))))),
-    "num_data_records"      => parse(Int, strip(ascii(String(read!(fid, Array{UInt8}(undef, 8)))))),
-    "duration_data_records" => parse(Int, ascii(String(read!(fid, Array{UInt8}(undef, 8))))),
-    "num_channels"          => parse(Int, ascii(String(read!(fid, Array{UInt8}(undef, 4)))))
-    )
-    hd2 = Dict{String, Any}(
-    "channel_labels"  => [String(strip(ascii(String(read!(fid, Array{UInt8}(undef,  16)))))) for _ in 1:hd1["num_channels"]],
-    "transducer_type" => [String(strip(ascii(String(read!(fid, Array{UInt8}(undef, 80)))))) for _ in 1:hd1["num_channels"]],
-    "channel_unit"    => [String(strip(ascii(String(read!(fid, Array{UInt8}(undef,  8)))))) for _ in 1:hd1["num_channels"]],
-    "physical_min"    => [parse(Int, strip(ascii(String(read!(fid, Array{UInt8}(undef,  8)))))) for _ in 1:hd1["num_channels"]],
-    "physical_max"    => [parse(Int, strip(ascii(String(read!(fid, Array{UInt8}(undef,  8)))))) for _ in 1:hd1["num_channels"]],
-    "digital_min"     => [parse(Int, strip(ascii(String(read!(fid, Array{UInt8}(undef,  8)))))) for _ in 1:hd1["num_channels"]],
-    "digital_max"     => [parse(Int, strip(ascii(String(read!(fid, Array{UInt8}(undef,  8)))))) for _ in 1:hd1["num_channels"]],
-    "pre_filter"      => [String(strip(ascii(String(read!(fid, Array{UInt8}(undef,  80)))))) for _ in 1:hd1["num_channels"]],
-    "num_samples"     => [parse(Int, strip(ascii(String(read!(fid, Array{UInt8}(undef,  8)))))) for _ in 1:hd1["num_channels"]],
-    "reserved"        => [String(strip(ascii(String(read!(fid, Array{UInt8}(undef,  32)))))) for _ in 1:hd1["num_channels"]]
-    )
-    hd3 = Dict{String, Any}(
-    "scale_factor" => convert(Array{Float32}, ((hd2["physical_max"] .- hd2["physical_min"]) ./ (hd2["digital_max"] .- hd2["digital_min"]))),
-    "sample_rate"  => convert(Array{Int}, hd2["num_samples"] ./ hd1["duration_data_records"])
-    )
-    hd = merge(hd1, hd2, hd3)
-    header_only && return hd
+    # read header information
+    id1 = read!(fid, Array{UInt8}(undef, 1))
+    id2 = ascii(String(read!(fid, Array{UInt8}(undef, 7))))
+    text1 = ascii(String(read!(fid, Array{UInt8}(undef, 80))))
+    text2 = ascii(String(read!(fid, Array{UInt8}(undef, 80))))
+    start_date = ascii(String(read!(fid, Array{UInt8}(undef, 8))))
+    start_time = ascii(String(read!(fid, Array{UInt8}(undef, 8))))
+    num_bytes_header = parse(Int, strip(ascii(String(read!(fid, Array{UInt8}(undef, 8))))))
+    data_format = strip(ascii(String(read!(fid, Array{UInt8}(undef, 44)))))
+    num_data_records = parse(Int, strip(ascii(String(read!(fid, Array{UInt8}(undef, 8))))))
+    duration_data_records = parse(Int, ascii(String(read!(fid, Array{UInt8}(undef, 8)))))
+    num_channels = parse(Int, ascii(String(read!(fid, Array{UInt8}(undef, 4)))))
+    channel_labels = [String(strip(ascii(String(read!(fid, Array{UInt8}(undef,  16)))))) for _ in 1:num_channels]
+    transducer_type = [String(strip(ascii(String(read!(fid, Array{UInt8}(undef, 80)))))) for _ in 1:num_channels]
+    channel_unit = [String(strip(ascii(String(read!(fid, Array{UInt8}(undef,  8)))))) for _ in 1:num_channels]
+    physical_min = [parse(Int, strip(ascii(String(read!(fid, Array{UInt8}(undef,  8)))))) for _ in 1:num_channels]
+    physical_max = [parse(Int, strip(ascii(String(read!(fid, Array{UInt8}(undef,  8)))))) for _ in 1:num_channels]
+    digital_min = [parse(Int, strip(ascii(String(read!(fid, Array{UInt8}(undef,  8)))))) for _ in 1:num_channels]
+    digital_max = [parse(Int, strip(ascii(String(read!(fid, Array{UInt8}(undef,  8)))))) for _ in 1:num_channels]
+    pre_filter = [String(strip(ascii(String(read!(fid, Array{UInt8}(undef,  80)))))) for _ in 1:num_channels]
+    num_samples = [parse(Int, strip(ascii(String(read!(fid, Array{UInt8}(undef,  8)))))) for _ in 1:num_channels]
+    reserved = [String(strip(ascii(String(read!(fid, Array{UInt8}(undef,  32)))))) for _ in 1:num_channels]
+    scale_factor = convert(Array{Float32}, ((physical_max.-physical_min) ./ (digital_max.-digital_min)))
+    sample_rate = convert(Array{Int}, num_samples ./ duration_data_records)
 
-    # read data
-    bdf = read!(fid, Array{UInt8}(undef, 3*(hd["num_data_records"]*hd["num_channels"]*hd["num_samples"][1])))
-    close(fid)
+    # create header dictionary
+    header = Dict{String, Any}(
+    "filename"              => filename,
+    "id1"                   => id1,
+    "id2"                   => id2,
+    "text1"                 => text1,
+    "text2"                 => text2,
+    "start_date"            => start_date,
+    "start_time"            => start_time,
+    "num_bytes_header"      => num_bytes_header,
+    "data_format"           => data_format,
+    "num_data_records"      => num_data_records,
+    "duration_data_records" => duration_data_records,
+    "num_channels"          => num_channels,
+    "channel_labels"        => channel_labels,
+    "transducer_type"       => transducer_type,
+    "channel_unit"          => channel_unit,
+    "physical_min"          => physical_min,
+    "physical_max"          => physical_max,
+    "digital_min"           => digital_min,
+    "digital_max"           => digital_max,
+    "pre_filter"            => pre_filter,
+    "num_samples"           => num_samples,
+    "reserved"              => reserved,
+    "scale_factor"          => scale_factor,
+    "sample_rate"           => sample_rate
+    )
+    header_only && return header
 
     if !isempty(channels)  # specific channel labels/numbers given
-      channels = channel_idx(hd["channel_labels"], channels)
-      update_header_bdf!(hd, channels)
+      channels = channel_idx(header["channel_labels"], channels)
+      update_header_bdf!(header, channels)
     else
-      channels = 1:hd["num_channels"]
+      channels = 1:num_channels
     end
 
-    dat, time, trig, status = bdf2matrix(bdf, hd["num_channels"], channels, hd["scale_factor"], hd["num_data_records"], hd["num_samples"], hd["sample_rate"])
+    # read data
+    bdf = read!(fid, Array{UInt8}(undef, 3*(num_data_records*num_channels*num_samples[1])))
+    close(fid)
+
+    dat_chans, trig_chan, status_chan = bdf2mat(bdf, num_channels, channels, scale_factor, num_data_records, num_samples)
+    time = collect(0:size(dat_chans, 2) - 1) / sample_rate[1]
 
     # events
-    trig_idx = findall(diff(trig) .>= 1) .+ 1
-    trig_val = trig[trig_idx]
+    trig_idx = findall(diff(trig_chan) .>= 1) .+ 1
+    trig_val = trig_chan[trig_idx]
 
     # create triggers dictionary
     triggers = Dict{String, Any}(
-    "raw"   => trig,
+    "raw"   => trig_chan,
     "idx"   => trig_idx,
     "val"   => trig_val,
     "count" => sort(countmap(trig_val)),
-    "time"  => hcat(trig_val, pushfirst!(diff(trig_idx), 0) / hd["sample_rate"][1])
+    "time"  => hcat(trig_val, pushfirst!(diff(trig_idx), 0) / header["sample_rate"][1])
     )
 
-    return BioSemi(hd, dat, time, triggers, status)
+    return BioSemiRawData(header, dat_chans, time, triggers, status_chan)
 
   end
 
@@ -119,7 +140,7 @@ module BioSemiBDF
   Internal functon used within read_bdf to read BioSemi 24bit data representation
   into julia data array/matrix
   """
-  function bdf2matrix(bdf, num_channels, channels, scale_factor, num_data_records, num_samples, sample_rate)
+  function bdf2mat(bdf, num_channels, channels, scale_factor, num_data_records, num_samples)
 
     dat_chans   = Matrix{Float32}(undef, length(channels)-1, (num_data_records*num_samples[1]))
     trig_chan   = Array{Int16}(undef, num_data_records*num_samples[1])
@@ -147,25 +168,24 @@ module BioSemiBDF
         end
       end
     end
-    time = collect(0:size(dat_chans, 2) - 1) / sample_rate[1]
 
-    return dat_chans, time, trig_chan, status_chan
+    return dat_chans, trig_chan, status_chan
 
   end
 
 
   """
-    write_bdf(bdf_in::BioSemi)
+    write_bdf(bdf_in::BioSemiRawData)
   Write BioSemiRaw structs to *.bdf file.
   See https://www.biosemi.com/faq_file_format.htm for file format details.
   ### Inputs:
-  * BioSemi struct
+  * BioSemiRawData struct
   ### Examples:
   ```julia
   dat1 = read_bdf("filename1.bdf")
   write_bdf(dat1)
   """
-  function write_bdf(bdf_in::BioSemi, filename::String="")
+  function write_bdf(bdf_in::BioSemiRawData, filename::String="")
 
     isempty(filename) ? fid = open(bdf_in.header["filename"], "w") : fid = open(filename, "w")
 
@@ -242,7 +262,7 @@ module BioSemiBDF
 
 
   """
-    merge_bdf(bdf_in::Array{BioSemi}, filename::String="merged.bdf")
+    merge_bdf(bdf_in::Array{BioSemiRawData}, filename::String="merged.bdf")
   Merge BioSemiRaw structs to single BioSemiRaw struct. Checks that the
     input BioSemiRaw structs have the same number of channels, same channel
     labels and that each channel has the same sample rate.
@@ -253,7 +273,7 @@ module BioSemiBDF
   dat3 = merge_bdf([dat1, dat2], "filename_merged.bdf")
   ```
   """
-  function merge_bdf(bdf_in::Array{BioSemi}, filename::String)
+  function merge_bdf(bdf_in::Array{BioSemiRawData}, filename::String)
 
     # check data structs to merge have same number of channels, channel labels + sample rate
     num_chans = (x -> x.header["num_channels"]).(bdf_in)
@@ -290,8 +310,8 @@ module BioSemiBDF
 
 
   """
-    select_channels_bdf(bdf_in::BioSemi, channels::Union{Array{Int}, Array{String}})
-  Select specific channels from BioSemi struct. Channels can be specified
+    select_channels_bdf(bdf_in::BioSemiRawData, channels::Union{Array{Int}, Array{String}})
+  Select specific channels from BioSemiRawData struct. Channels can be specified
     using channel numbers or channel labels.
   ### Examples:
   ```julia
@@ -300,7 +320,7 @@ module BioSemiBDF
   dat1 = select_channels_bdf(dat, ["Fp1", "F1"])
   ```
   """
-  function select_channels_bdf(bdf_in::BioSemi, channels::Union{Array{Int}, Array{String}})
+  function select_channels_bdf(bdf_in::BioSemiRawData, channels::Union{Array{Int}, Array{String}})
     bdf_out = deepcopy(bdf_in)
     channels = channel_idx(bdf_out.header["channel_labels"], channels)
     update_header_bdf!(bdf_out.header, channels)
@@ -310,7 +330,7 @@ module BioSemiBDF
 
 
   """
-    crop_bdf(bdf_in::BioSemi, crop_type::tString, val::Array{Int}, filename::String)
+    crop_bdf(bdf_in::BioSemiRawData, crop_type::tString, val::Array{Int}, filename::String)
   Recuce the length of the recorded data. The border upon which to crop the bdf file can be defined using either
   a start and end trigger ("triggers") or a start and end record ("records").
   ### Examples:
@@ -320,7 +340,7 @@ module BioSemiBDF
   dat3 = crop_bdf(dat1, "records",  [1 100], "filename1_cropped.bdf") # data records 1 to 100 inclusive
   ```
   """
-  function crop_bdf(bdf_in::BioSemi, crop_type::String, val::Array{Int}, filename::String)
+  function crop_bdf(bdf_in::BioSemiRawData, crop_type::String, val::Array{Int}, filename::String)
 
     length(val) != 2 && error("val should be of length 2")
 
@@ -369,8 +389,8 @@ module BioSemiBDF
 
 
   """
-    downsample_bdf(bdf_in::BioSemi, dec::Int, filename::String)
-  Reduce the sampling rate within a BioSemi struct by an integer factor (dec).
+    downsample_bdf(bdf_in::BioSemiRawData, dec::Int, filename::String)
+  Reduce the sampling rate within a BioSemiRawData struct by an integer factor (dec).
   ### Examples:
   ```julia
   dat1 = read_bdf("filename1.bdf")
@@ -378,7 +398,7 @@ module BioSemiBDF
   ```
   """
   # TO DO: make separate mirror function
-  function downsample_bdf(bdf_in::BioSemi, dec::Int, filename::String)
+  function downsample_bdf(bdf_in::BioSemiRawData, dec::Int, filename::String)
 
     !ispow2(dec) && error("dec should be power of 2!")
 
@@ -407,8 +427,8 @@ module BioSemiBDF
   end
 
   """
-    update_header_bdf(bdf_in::BioSemi, channels::Array{Int})
-  Updates header Dict within BioSemi struct following the selection
+    update_header_bdf(bdf_in::BioSemiRawData, channels::Array{Int})
+  Updates header Dict within BioSemiRawData struct following the selection
   of specific channels in read_bdf or select_channels_bdf.
   """
   function update_header_bdf!(header::Dict, channels::Array{Int})
