@@ -49,59 +49,43 @@ module BioSemiBDF
 
     fid = open(filename, "r")
 
-    # read header information
-    id1 = read!(fid, Array{UInt8}(undef, 1))
-    id2 = ascii(String(read!(fid, Array{UInt8}(undef, 7))))
-    text1 = ascii(String(read!(fid, Array{UInt8}(undef, 80))))
-    text2 = ascii(String(read!(fid, Array{UInt8}(undef, 80))))
-    start_date = ascii(String(read!(fid, Array{UInt8}(undef, 8))))
-    start_time = ascii(String(read!(fid, Array{UInt8}(undef, 8))))
-    num_bytes_header = parse(Int, strip(ascii(String(read!(fid, Array{UInt8}(undef, 8))))))
-    data_format = strip(ascii(String(read!(fid, Array{UInt8}(undef, 44)))))
-    num_data_records = parse(Int, strip(ascii(String(read!(fid, Array{UInt8}(undef, 8))))))
-    duration_data_records = parse(Int, ascii(String(read!(fid, Array{UInt8}(undef, 8)))))
-    num_channels = parse(Int, ascii(String(read!(fid, Array{UInt8}(undef, 4)))))
-    channel_labels = [String(strip(ascii(String(read!(fid, Array{UInt8}(undef,  16)))))) for _ in 1:num_channels]
-    transducer_type = [String(strip(ascii(String(read!(fid, Array{UInt8}(undef, 80)))))) for _ in 1:num_channels]
-    channel_unit = [String(strip(ascii(String(read!(fid, Array{UInt8}(undef,  8)))))) for _ in 1:num_channels]
-    physical_min = [parse(Int, strip(ascii(String(read!(fid, Array{UInt8}(undef,  8)))))) for _ in 1:num_channels]
-    physical_max = [parse(Int, strip(ascii(String(read!(fid, Array{UInt8}(undef,  8)))))) for _ in 1:num_channels]
-    digital_min = [parse(Int, strip(ascii(String(read!(fid, Array{UInt8}(undef,  8)))))) for _ in 1:num_channels]
-    digital_max = [parse(Int, strip(ascii(String(read!(fid, Array{UInt8}(undef,  8)))))) for _ in 1:num_channels]
-    pre_filter = [String(strip(ascii(String(read!(fid, Array{UInt8}(undef,  80)))))) for _ in 1:num_channels]
-    num_samples = [parse(Int, strip(ascii(String(read!(fid, Array{UInt8}(undef,  8)))))) for _ in 1:num_channels]
-    reserved = [String(strip(ascii(String(read!(fid, Array{UInt8}(undef,  32)))))) for _ in 1:num_channels]
-    scale_factor = convert(Array{Float32}, ((physical_max.-physical_min) ./ (digital_max.-digital_min)))
-    sample_rate = convert(Array{Int}, num_samples ./ duration_data_records)
-
     # create header dictionary
-    header = Dict{String, Any}(
+    hd1 = Dict{String, Any}(
     "filename"              => filename,
-    "id1"                   => id1,
-    "id2"                   => id2,
-    "text1"                 => text1,
-    "text2"                 => text2,
-    "start_date"            => start_date,
-    "start_time"            => start_time,
-    "num_bytes_header"      => num_bytes_header,
-    "data_format"           => data_format,
-    "num_data_records"      => num_data_records,
-    "duration_data_records" => duration_data_records,
-    "num_channels"          => num_channels,
-    "channel_labels"        => channel_labels,
-    "transducer_type"       => transducer_type,
-    "channel_unit"          => channel_unit,
-    "physical_min"          => physical_min,
-    "physical_max"          => physical_max,
-    "digital_min"           => digital_min,
-    "digital_max"           => digital_max,
-    "pre_filter"            => pre_filter,
-    "num_samples"           => num_samples,
-    "reserved"              => reserved,
-    "scale_factor"          => scale_factor,
-    "sample_rate"           => sample_rate
+    "id1"                   => read!(fid, Array{UInt8}(undef, 1)),
+    "id2"                   => ascii(String(read!(fid, Array{UInt8}(undef, 7)))),
+    "text1"                 => ascii(String(read!(fid, Array{UInt8}(undef, 80)))),
+    "text2"                 => ascii(String(read!(fid, Array{UInt8}(undef, 80)))),
+    "start_date"            => ascii(String(read!(fid, Array{UInt8}(undef, 8)))),
+    "start_time"            => ascii(String(read!(fid, Array{UInt8}(undef, 8)))),
+    "num_bytes_header"      => parse(Int, strip(ascii(String(read!(fid, Array{UInt8}(undef, 8)))))),
+    "data_format"           => strip(ascii(String(read!(fid, Array{UInt8}(undef, 44))))),
+    "num_data_records"      => parse(Int, strip(ascii(String(read!(fid, Array{UInt8}(undef, 8)))))),
+    "duration_data_records" => parse(Int, ascii(String(read!(fid, Array{UInt8}(undef, 8))))),
+    "num_channels"          => parse(Int, ascii(String(read!(fid, Array{UInt8}(undef, 4)))))
     )
-    header_only && return header
+    hd2 = Dict{String, Any}(
+    "channel_labels"  => [String(strip(ascii(String(read!(fid, Array{UInt8}(undef,  16)))))) for _ in 1:hd1["num_channels"]],
+    "transducer_type" => [String(strip(ascii(String(read!(fid, Array{UInt8}(undef, 80)))))) for _ in 1:hd1["num_channels"]],
+    "channel_unit"    => [String(strip(ascii(String(read!(fid, Array{UInt8}(undef,  8)))))) for _ in 1:hd1["num_channels"]],
+    "physical_min"    => [parse(Int, strip(ascii(String(read!(fid, Array{UInt8}(undef,  8)))))) for _ in 1:hd1["num_channels"]],
+    "physical_max"    => [parse(Int, strip(ascii(String(read!(fid, Array{UInt8}(undef,  8)))))) for _ in 1:hd1["num_channels"]],
+    "digital_min"     => [parse(Int, strip(ascii(String(read!(fid, Array{UInt8}(undef,  8)))))) for _ in 1:hd1["num_channels"]],
+    "digital_max"     => [parse(Int, strip(ascii(String(read!(fid, Array{UInt8}(undef,  8)))))) for _ in 1:hd1["num_channels"]],
+    "pre_filter"      => [String(strip(ascii(String(read!(fid, Array{UInt8}(undef,  80)))))) for _ in 1:hd1["num_channels"]],
+    "num_samples"     => [parse(Int, strip(ascii(String(read!(fid, Array{UInt8}(undef,  8)))))) for _ in 1:hd1["num_channels"]],
+    "reserved"        => [String(strip(ascii(String(read!(fid, Array{UInt8}(undef,  32)))))) for _ in 1:hd1["num_channels"]]
+    )
+    hd3 = Dict{String, Any}(
+    "scale_factor" => convert(Array{Float32}, ((hd2["physical_max"] .- hd2["physical_min"]) ./ (hd2["digital_max"] .- hd2["digital_min"]))),
+    "sample_rate"  => convert(Array{Int}, hd2["num_samples"] ./ hd1["duration_data_records"])
+    )
+    hd = merge(hd1, hd2, hd3)
+    header_only && return hd
+
+    # read data
+    bdf = read!(fid, Array{UInt8}(undef, 3*(hd["num_data_records"]*hd["num_channels"]*hd["num_samples"][1])))
+    close(fid)
 
     if !isempty(channels)  # specific channel labels/numbers given
       channels = channel_idx(header["channel_labels"], channels)
@@ -110,11 +94,7 @@ module BioSemiBDF
       channels = 1:num_channels
     end
 
-    # read data
-    bdf = read!(fid, Array{UInt8}(undef, 3*(num_data_records*num_channels*num_samples[1])))
-    close(fid)
-
-    dat_chans, time, trig_chan, status_chan = bdf2mat(bdf, num_channels, channels, scale_factor, num_data_records, num_samples, sample_rate)
+    dat, time, trig, status = bdf2matrix(bdf, hd["num_channels"], channels, hd["scale_factor"], hd["num_data_records"], hd["num_samples"], hd["sample_rate"])
 
     # events
     trig_idx = findall(diff(trig_chan) .>= 1) .+ 1
@@ -129,7 +109,7 @@ module BioSemiBDF
     "time"  => hcat(trig_val, pushfirst!(diff(trig_idx), 0) / header["sample_rate"][1])
     )
 
-    return BioSemiRawData(header, dat_chans, time, triggers, status_chan)
+    return BioSemiRawData(hd, dat_chans, time, triggers, status_chan)
 
   end
 
