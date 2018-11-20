@@ -97,12 +97,12 @@ module BioSemiBDF
     dat, time, trig, status = bdf2matrix(bdf, hd["num_channels"], channels, hd["scale_factor"], hd["num_data_records"], hd["num_samples"], hd["sample_rate"])
 
     # events
-    trig_idx = findall(diff(trig_chan) .>= 1) .+ 1
+    trig_idx = findall(diff(trig) .>= 1) .+ 1
     trig_val = trig_chan[trig_idx]
 
     # create triggers dictionary
     triggers = Dict{String, Any}(
-    "raw"   => trig_chan,
+    "raw"   => trig,
     "idx"   => trig_idx,
     "val"   => trig_val,
     "count" => sort(countmap(trig_val)),
