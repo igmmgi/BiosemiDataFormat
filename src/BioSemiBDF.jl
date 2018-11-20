@@ -88,8 +88,8 @@ module BioSemiBDF
     close(fid)
 
     if !isempty(channels)  # specific channel labels/numbers given
-      channels = channel_idx(header["channel_labels"], channels)
-      update_header_bdf!(header, channels)
+      channels = channel_idx(hd["channel_labels"], channels)
+      update_header_bdf!(hd, channels)
     else
       channels = 1:hd["num_channels"]
     end
