@@ -109,7 +109,7 @@ module BioSemiBDF
     "time"  => hcat(trig_val, pushfirst!(diff(trig_idx), 0) / hd["sample_rate"][1])
     )
 
-    return BioSemiRawData(hd, dat_chans, time, triggers, status_chan)
+    return BioSemiRawData(hd, dat, time, triggers, status)
 
   end
 
