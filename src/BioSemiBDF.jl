@@ -22,7 +22,7 @@ module BioSemiBDF
 
 
   """
-    read_bdf(filename::String; header_only::Bool=false, channels::Union{Array{Any}, Array{Int}, Array{String}}=[])
+  read_bdf(filename::String; header_only::Bool=false, channels::Union{Array{Any}, Array{Int}, Array{String}}}=[])
   Reads BioSemi Data Format (bdf) files.
   See https://www.biosemi.com/faq_file_format.htm for file format details.
   ### Inputs:
@@ -81,7 +81,7 @@ module BioSemiBDF
     "sample_rate"  => convert(Array{Int}, hd2["num_samples"] ./ hd1["duration_data_records"])
     )
     hd = merge(hd1, hd2, hd3)
-    header_only && return hd
+    header_only && return hd1
 
     # read data
     bdf = read!(fid, Array{UInt8}(undef, 3*(hd["num_data_records"]*hd["num_channels"]*hd["num_samples"][1])))

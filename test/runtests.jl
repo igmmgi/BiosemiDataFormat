@@ -17,6 +17,16 @@ using Test
 
 end
 
+@testset "Newtest17-256_read_bdf_header_only" begin
+
+    bdf_filename = joinpath(dirname(@__FILE__), "Newtest17-256.bdf")
+    dat = read_bdf(bdf_filename, header_only=true)
+
+    @test isa(dat, Dict)
+    @test isequal(length(dat), 24))
+
+end
+
 @testset "Newtest17-256_read_bdf_channels" begin
 
     bdf_filename = joinpath(dirname(@__FILE__), "Newtest17-256.bdf")
@@ -67,6 +77,16 @@ end
     @test isequal(dat.triggers["idx"][1], 3353)
     @test isequal(dat.triggers["val"][1], 255)
     @test isequal(dat.triggers["count"][255], 39)
+
+end
+
+@testset "Newtest17-2048_read_bdf_header_only" begin
+
+    bdf_filename = joinpath(dirname(@__FILE__), "Newtest17-2048.bdf")
+    dat = read_bdf(bdf_filename, header_only=true)
+
+    @test isa(dat, Dict)
+    @test isequal(length(dat), 24))
 
 end
 
