@@ -114,8 +114,7 @@ module BioSemiBDF
     bdf = read!(fid, Array{UInt8}(undef, 3*(num_data_records*num_channels*num_samples[1])))
     close(fid)
 
-    dat_chans, trig_chan, status_chan = bdf2mat(bdf, num_channels, channels, scale_factor, num_data_records, num_samples)
-    time = collect(0:size(dat_chans, 2) - 1) / sample_rate[1]
+    dat_chans, time, trig_chan, status_chan = bdf2mat(bdf, num_channels, channels, scale_factor, num_data_records, num_samples, sample_rate)
 
     # events
     trig_idx = findall(diff(trig_chan) .>= 1) .+ 1
@@ -168,8 +167,9 @@ module BioSemiBDF
         end
       end
     end
+    time = collect(0:size(dat_chans, 2) - 1) / sample_rate[1]
 
-    return dat_chans, trig_chan, status_chan
+    return dat_chans, time, trig_chan, status_chan
 
   end
 
