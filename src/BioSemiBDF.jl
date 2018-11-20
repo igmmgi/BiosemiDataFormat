@@ -139,7 +139,7 @@ module BioSemiBDF
   Internal functon used within read_bdf to read BioSemi 24bit data representation
   into julia data array/matrix
   """
-  function bdf2mat(bdf, num_channels, channels, scale_factor, num_data_records, num_samples)
+  function bdf2mat(bdf, num_channels, channels, scale_factor, num_data_records, num_samples, sample_rate)
 
     dat_chans   = Matrix{Float32}(undef, length(channels)-1, (num_data_records*num_samples[1]))
     trig_chan   = Array{Int16}(undef, num_data_records*num_samples[1])
