@@ -87,14 +87,10 @@ module BioSemiBDF
     bdf = read!(fid, Array{UInt8}(undef, 3*(hd["num_data_records"]*hd["num_channels"]*hd["num_samples"][1])))
     close(fid)
 
-    if !isempty(channels)  # specific channel labels/numbers given
-      channels = channel_idx(hd["channel_labels"], channels)
-    else
-      channels = collect(1:hd["num_channels"])
-    end
+    channels = !isempty(channels) ? channel_idx(hd["channel_labels"], channels) : collect(1:hd["num_channels"])
 
     dat, time, trig, status = bdf2matrix(bdf, hd["num_channels"], channels, hd["scale_factor"], hd["num_data_records"], hd["num_samples"], hd["sample_rate"])
-    update_header_bdf!(hd, channels)
+    channels != collect(1:hd["num_channels"]) && update_header_bdf!(hd, channels)
 
     # events
     trig_idx = findall(diff(trig) .>= 1) .+ 1
@@ -115,7 +111,7 @@ module BioSemiBDF
 
 
   """
-    bdf2mat(bdf, num_channels, channels, scale_factor, num_data_records, num_samples)
+  bdf2matrix(bdf, num_channels, channels, scale_factor, num_data_records, num_samples)
   Internal functon used within read_bdf to read BioSemi 24bit data representation
   into julia data array/matrix
   """
@@ -155,7 +151,7 @@ module BioSemiBDF
 
 
   """
-    write_bdf(bdf_in::BioSemiRawData)
+  write_bdf(bdf_in::BioSemiRawData)
   Write BioSemiRaw structs to *.bdf file.
   See https://www.biosemi.com/faq_file_format.htm for file format details.
   ### Inputs:
@@ -198,7 +194,7 @@ module BioSemiBDF
     num_samples      = bdf_in.header["num_samples"][1]
     num_channels     = bdf_in.header["num_channels"]
 
-    bdf = mat2bdf(data, trigs, status, num_data_records, num_samples, num_channels)
+    bdf = matrix2bdf(data, trigs, status, num_data_records, num_samples, num_channels)
 
     write(fid, Array{UInt8}(bdf))
     close(fid)
@@ -207,11 +203,11 @@ module BioSemiBDF
 
 
   """
-    mat2bdf(data, trigs, status, num_data_records, num_samples, num_channels)
+  matrix2bdf(data, trigs, status, num_data_records, num_samples, num_channels)
   Internal functon used within write_bdf to write Julia BioSemiBDF data matrix
   to bdf 24bit file format.
   """
-  function mat2bdf(data, trigs, status, num_data_records, num_samples, num_channels)
+  function matrix2bdf(data, trigs, status, num_data_records, num_samples, num_channels)
 
     bdf = Array{UInt8}(undef, 3*(num_data_records*num_channels*num_samples))
     pos = 1
@@ -242,7 +238,7 @@ module BioSemiBDF
 
 
   """
-    merge_bdf(bdf_in::Array{BioSemiRawData}, filename::String="merged.bdf")
+  merge_bdf(bdf_in::Array{BioSemiRawData}, filename::String="merged.bdf")
   Merge BioSemiRaw structs to single BioSemiRaw struct. Checks that the
     input BioSemiRaw structs have the same number of channels, same channel
     labels and that each channel has the same sample rate.
@@ -290,7 +286,7 @@ module BioSemiBDF
 
 
   """
-    select_channels_bdf(bdf_in::BioSemiRawData, channels::Union{Array{Int}, Array{String}})
+  select_channels_bdf(bdf_in::BioSemiRawData, channels::Union{Array{Int}, Array{String}})
   Select specific channels from BioSemiRawData struct. Channels can be specified
     using channel numbers or channel labels.
   ### Examples:
@@ -310,7 +306,7 @@ module BioSemiBDF
 
 
   """
-    crop_bdf(bdf_in::BioSemiRawData, crop_type::tString, val::Array{Int}, filename::String)
+  crop_bdf(bdf_in::BioSemiRawData, crop_type::tString, val::Array{Int}, filename::String)
   Recuce the length of the recorded data. The border upon which to crop the bdf file can be defined using either
   a start and end trigger ("triggers") or a start and end record ("records").
   ### Examples:
@@ -369,7 +365,7 @@ module BioSemiBDF
 
 
   """
-    downsample_bdf(bdf_in::BioSemiRawData, dec::Int, filename::String)
+  downsample_bdf(bdf_in::BioSemiRawData, dec::Int, filename::String)
   Reduce the sampling rate within a BioSemiRawData struct by an integer factor (dec).
   ### Examples:
   ```julia
@@ -429,7 +425,7 @@ module BioSemiBDF
   end
 
   """
-    channel_idx(labels::Array{String}, channels::Array{String})
+  channel_idx(labels::Array{String}, channels::Array{String})
   Return channel index given labels and desired selection.
   """
   function channel_idx(labels::Array{String}, channels::Array{String})
@@ -440,7 +436,7 @@ module BioSemiBDF
   end
 
   """
-    channel_idx(labels::Array{String}, channels::Array{Int})
+  channel_idx(labels::Array{String}, channels::Array{Int})
   Return channel index given labels and desired selection.
   """
   function channel_idx(labels::Array{String}, channels::Array{Int})
