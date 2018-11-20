@@ -23,7 +23,7 @@ end
     dat = read_bdf(bdf_filename, header_only=true)
 
     @test isa(dat, Dict)
-    @test isequal(length(dat), 24))
+    @test isequal(length(dat), 24)
 
 end
 
@@ -86,7 +86,7 @@ end
     dat = read_bdf(bdf_filename, header_only=true)
 
     @test isa(dat, Dict)
-    @test isequal(length(dat), 24))
+    @test isequal(length(dat), 24)
 
 end
 
