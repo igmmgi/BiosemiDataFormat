@@ -12,7 +12,7 @@ module BioSemiBDF
   read_bdf,
   write_bdf
 
-  mutable struct BioSemiRawData
+  mutable struct BioSemi
     header::Dict
     data::Matrix
     time::Array
@@ -31,7 +31,7 @@ module BioSemiBDF
   * header_only Bool=false
   * channels Array Int/String
   ### Outputs:
-  * BioSemiRawData struct with the following fields
+  * BioSemi struct with the following fields
   * header Dict
   * data (channels * samples) Matrix
   * time
@@ -130,7 +130,7 @@ module BioSemiBDF
     "time"  => hcat(trig_val, pushfirst!(diff(trig_idx), 0) / header["sample_rate"][1])
     )
 
-    return BioSemiRawData(header, dat_chans, time, triggers, status_chan)
+    return BioSemi(header, dat_chans, time, triggers, status_chan)
 
   end
 
@@ -175,17 +175,17 @@ module BioSemiBDF
 
 
   """
-    write_bdf(bdf_in::BioSemiRawData)
+    write_bdf(bdf_in::BioSemi)
   Write BioSemiRaw structs to *.bdf file.
   See https://www.biosemi.com/faq_file_format.htm for file format details.
   ### Inputs:
-  * BioSemiRawData struct
+  * BioSemi struct
   ### Examples:
   ```julia
   dat1 = read_bdf("filename1.bdf")
   write_bdf(dat1)
   """
-  function write_bdf(bdf_in::BioSemiRawData, filename::String="")
+  function write_bdf(bdf_in::BioSemi, filename::String="")
 
     isempty(filename) ? fid = open(bdf_in.header["filename"], "w") : fid = open(filename, "w")
 
@@ -262,7 +262,7 @@ module BioSemiBDF
 
 
   """
-    merge_bdf(bdf_in::Array{BioSemiRawData}, filename::String="merged.bdf")
+    merge_bdf(bdf_in::Array{BioSemi}, filename::String="merged.bdf")
   Merge BioSemiRaw structs to single BioSemiRaw struct. Checks that the
     input BioSemiRaw structs have the same number of channels, same channel
     labels and that each channel has the same sample rate.
@@ -273,7 +273,7 @@ module BioSemiBDF
   dat3 = merge_bdf([dat1, dat2], "filename_merged.bdf")
   ```
   """
-  function merge_bdf(bdf_in::Array{BioSemiRawData}, filename::String)
+  function merge_bdf(bdf_in::Array{BioSemi}, filename::String)
 
     # check data structs to merge have same number of channels, channel labels + sample rate
     num_chans = (x -> x.header["num_channels"]).(bdf_in)
@@ -310,8 +310,8 @@ module BioSemiBDF
 
 
   """
-    select_channels_bdf(bdf_in::BioSemiRawData, channels::Union{Array{Int}, Array{String}})
-  Select specific channels from BioSemiRawData struct. Channels can be specified
+    select_channels_bdf(bdf_in::BioSemi, channels::Union{Array{Int}, Array{String}})
+  Select specific channels from BioSemi struct. Channels can be specified
     using channel numbers or channel labels.
   ### Examples:
   ```julia
@@ -320,7 +320,7 @@ module BioSemiBDF
   dat1 = select_channels_bdf(dat, ["Fp1", "F1"])
   ```
   """
-  function select_channels_bdf(bdf_in::BioSemiRawData, channels::Union{Array{Int}, Array{String}})
+  function select_channels_bdf(bdf_in::BioSemi, channels::Union{Array{Int}, Array{String}})
     bdf_out = deepcopy(bdf_in)
     channels = channel_idx(bdf_out.header["channel_labels"], channels)
     update_header_bdf!(bdf_out.header, channels)
@@ -330,7 +330,7 @@ module BioSemiBDF
 
 
   """
-    crop_bdf(bdf_in::BioSemiRawData, crop_type::tString, val::Array{Int}, filename::String)
+    crop_bdf(bdf_in::BioSemi, crop_type::tString, val::Array{Int}, filename::String)
   Recuce the length of the recorded data. The border upon which to crop the bdf file can be defined using either
   a start and end trigger ("triggers") or a start and end record ("records").
   ### Examples:
@@ -340,7 +340,7 @@ module BioSemiBDF
   dat3 = crop_bdf(dat1, "records",  [1 100], "filename1_cropped.bdf") # data records 1 to 100 inclusive
   ```
   """
-  function crop_bdf(bdf_in::BioSemiRawData, crop_type::String, val::Array{Int}, filename::String)
+  function crop_bdf(bdf_in::BioSemi, crop_type::String, val::Array{Int}, filename::String)
 
     length(val) != 2 && error("val should be of length 2")
 
@@ -389,8 +389,8 @@ module BioSemiBDF
 
 
   """
-    downsample_bdf(bdf_in::BioSemiRawData, dec::Int, filename::String)
-  Reduce the sampling rate within a BioSemiRawData struct by an integer factor (dec).
+    downsample_bdf(bdf_in::BioSemi, dec::Int, filename::String)
+  Reduce the sampling rate within a BioSemi struct by an integer factor (dec).
   ### Examples:
   ```julia
   dat1 = read_bdf("filename1.bdf")
@@ -398,7 +398,7 @@ module BioSemiBDF
   ```
   """
   # TO DO: make separate mirror function
-  function downsample_bdf(bdf_in::BioSemiRawData, dec::Int, filename::String)
+  function downsample_bdf(bdf_in::BioSemi, dec::Int, filename::String)
 
     !ispow2(dec) && error("dec should be power of 2!")
 
@@ -427,8 +427,8 @@ module BioSemiBDF
   end
 
   """
-    update_header_bdf(bdf_in::BioSemiRawData, channels::Array{Int})
-  Updates header Dict within BioSemiRawData struct following the selection
+    update_header_bdf(bdf_in::BioSemi, channels::Array{Int})
+  Updates header Dict within BioSemi struct following the selection
   of specific channels in read_bdf or select_channels_bdf.
   """
   function update_header_bdf!(header::Dict, channels::Array{Int})
