@@ -98,7 +98,7 @@ module BioSemiBDF
 
     # events
     trig_idx = findall(diff(trig) .>= 1) .+ 1
-    trig_val = trig_chan[trig_idx]
+    trig_val = trig[trig_idx]
 
     # create triggers dictionary
     triggers = Dict{String, Any}(
