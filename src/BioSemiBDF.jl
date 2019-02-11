@@ -58,9 +58,9 @@ function read_bdf(filename::String; header_only::Bool=false, channels::Union{Arr
                           "text2"                 => ascii(String(read!(fid, Array{UInt8}(undef, 80)))),
                           "start_date"            => ascii(String(read!(fid, Array{UInt8}(undef, 8)))),
                           "start_time"            => ascii(String(read!(fid, Array{UInt8}(undef, 8)))),
-                          "num_bytes_header"      => parse(Int, strip(ascii(String(read!(fid, Array{UInt8}(undef, 8)))))),
+                          "num_bytes_header"      => parse(Int, ascii(String(read!(fid, Array{UInt8}(undef, 8))))),
                           "data_format"           => strip(ascii(String(read!(fid, Array{UInt8}(undef, 44))))),
-                          "num_data_records"      => parse(Int, strip(ascii(String(read!(fid, Array{UInt8}(undef, 8)))))),
+                          "num_data_records"      => parse(Int, ascii(String(read!(fid, Array{UInt8}(undef, 8))))),
                           "duration_data_records" => parse(Int, ascii(String(read!(fid, Array{UInt8}(undef, 8))))),
                           "num_channels"          => parse(Int, ascii(String(read!(fid, Array{UInt8}(undef, 4)))))
                          )
@@ -68,18 +68,19 @@ function read_bdf(filename::String; header_only::Bool=false, channels::Union{Arr
                           "channel_labels"  => [String(strip(ascii(String(read!(fid, Array{UInt8}(undef,  16)))))) for _ in 1:hd1["num_channels"]],
                           "transducer_type" => [String(strip(ascii(String(read!(fid, Array{UInt8}(undef, 80)))))) for _ in 1:hd1["num_channels"]],
                           "channel_unit"    => [String(strip(ascii(String(read!(fid, Array{UInt8}(undef,  8)))))) for _ in 1:hd1["num_channels"]],
-                          "physical_min"    => [parse(Int, strip(ascii(String(read!(fid, Array{UInt8}(undef,  8)))))) for _ in 1:hd1["num_channels"]],
-                          "physical_max"    => [parse(Int, strip(ascii(String(read!(fid, Array{UInt8}(undef,  8)))))) for _ in 1:hd1["num_channels"]],
-                          "digital_min"     => [parse(Int, strip(ascii(String(read!(fid, Array{UInt8}(undef,  8)))))) for _ in 1:hd1["num_channels"]],
-                          "digital_max"     => [parse(Int, strip(ascii(String(read!(fid, Array{UInt8}(undef,  8)))))) for _ in 1:hd1["num_channels"]],
+                          "physical_min"    => [parse(Int, ascii(String(read!(fid, Array{UInt8}(undef,  8))))) for _ in 1:hd1["num_channels"]],
+                          "physical_max"    => [parse(Int, ascii(String(read!(fid, Array{UInt8}(undef,  8))))) for _ in 1:hd1["num_channels"]],
+                          "digital_min"     => [parse(Int, ascii(String(read!(fid, Array{UInt8}(undef,  8))))) for _ in 1:hd1["num_channels"]],
+                          "digital_max"     => [parse(Int, ascii(String(read!(fid, Array{UInt8}(undef,  8))))) for _ in 1:hd1["num_channels"]],
                           "pre_filter"      => [String(strip(ascii(String(read!(fid, Array{UInt8}(undef,  80)))))) for _ in 1:hd1["num_channels"]],
-                          "num_samples"     => [parse(Int, strip(ascii(String(read!(fid, Array{UInt8}(undef,  8)))))) for _ in 1:hd1["num_channels"]],
+                          "num_samples"     => [parse(Int, ascii(String(read!(fid, Array{UInt8}(undef,  8))))) for _ in 1:hd1["num_channels"]],
                           "reserved"        => [String(strip(ascii(String(read!(fid, Array{UInt8}(undef,  32)))))) for _ in 1:hd1["num_channels"]]
                          )
   hd3 = Dict{String, Any}(
                           "scale_factor" => convert(Array{Float32}, ((hd2["physical_max"] .- hd2["physical_min"]) ./ (hd2["digital_max"] .- hd2["digital_min"]))),
                           "sample_rate"  => convert(Array{Int}, hd2["num_samples"] ./ hd1["duration_data_records"])
                          )
+
   hd = merge(hd1, hd2, hd3)
   header_only && return hd
 
