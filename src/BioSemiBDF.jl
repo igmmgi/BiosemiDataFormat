@@ -28,7 +28,6 @@ See https://www.biosemi.com/faq_file_format.htm for file format details.
 ### Inputs:
 * filename String
 * header_only Bool=false
-* header_only Bool=false
 * channels Array Int/String
 ### Outputs:
 * BioSemiData struct with the following fields
@@ -129,16 +128,15 @@ function bdf2matrix(bdf, num_channels, channels, scale_factor, num_data_records,
         if chan < num_channels
           for samp = 1:num_samples[1]
             dat_chans[idx, rec*num_samples[1]+samp] = Float32(((Int32(bdf[pos]) << 8) | (Int32(bdf[pos+1]) << 16) | (Int32(bdf[pos+2]) << 24)) >> 8) * scale_factor[chan]
-            pos += 3
           end
         else  # last channel is always Status channel
           for samp = 1:num_samples[1]
             trig_chan[rec*num_samples[1]+samp] = ((Int16(bdf[pos])) | (Int16(bdf[pos+1]) << 8))
             status_chan[rec*num_samples[1]+samp] = Int16(bdf[pos+2])
-            pos += 3
           end
         end
-        idx += 1
+        pos += 3
+        idx += 
       else # channel not selected
         pos += num_samples[1]*3
       end
@@ -220,7 +218,6 @@ function matrix2bdf(data, trigs, status, num_data_records, num_samples, num_chan
           bdf[pos  ] = (data_val % UInt8)
           bdf[pos+1] = ((data_val >> 8) % UInt8)
           bdf[pos+2] = ((data_val >> 16) % UInt8)
-          pos += 3
         end
       else  # last channel is Status channel
         for samp = 1:num_samples
@@ -229,9 +226,9 @@ function matrix2bdf(data, trigs, status, num_data_records, num_samples, num_chan
           bdf[pos  ] = trig_val % UInt8
           bdf[pos+1] = (trig_val >> 8) % UInt8
           bdf[pos+2] = (status_val) % UInt8
-          pos += 3
         end
       end
+      pos += 3
     end
   end
   return bdf
@@ -409,20 +406,26 @@ Updates header Dict within BioSemiData struct following the selection
 of specific channels in read_bdf or select_channels_bdf.
 """
 function update_header_bdf!(hd::Dict, channels::Array{Int})
-  hd["num_channels"]     = length(channels)
-  hd["physical_min"]     = hd["physical_min"][channels]
-  hd["physical_max"]     = hd["physical_max"][channels]
-  hd["digital_min"]      = hd["digital_min"][channels]
-  hd["digital_max"]      = hd["digital_max"][channels]
-  hd["scale_factor"]     = hd["scale_factor"][channels]
-  hd["transducer_type"]  = hd["transducer_type"][channels]
-  hd["num_samples"]      = hd["num_samples"][channels]
-  hd["channel_unit"]     = hd["channel_unit"][channels]
-  hd["reserved"]         = hd["reserved"][channels]
-  hd["sample_rate"]      = hd["sample_rate"][channels]
-  hd["channel_labels"]   = hd["channel_labels"][channels]
-  hd["pre_filter"]       = hd["pre_filter"][channels]
-  hd["num_bytes_header"] = (length(channels)+1) * 256
+  hd["num_channels"] = length(channels)
+  fields = ["physical_min", "physical_max", "digital_min", "digital_max",
+            "scale_factor", "transducer_type", "num_samples", "channel_unit",
+	        "reserved", "sample_rate", "channel_labels", "pre_filter"]
+  for field in fields
+    hd[field] = hd[field][channels]
+  end
+  # hd["physical_min"]     = hd["physical_min"][channels]
+  # hd["physical_max"]     = hd["physical_max"][channels]
+  # hd["digital_min"]      = hd["digital_min"][channels]
+  # hd["digital_max"]      = hd["digital_max"][channels]
+  # hd["scale_factor"]     = hd["scale_factor"][channels]
+  # hd["transducer_type"]  = hd["transducer_type"][channels]
+  # hd["num_samples"]      = hd["num_samples"][channels]
+  # hd["channel_unit"]     = hd["channel_unit"][channels]
+  # hd["reserved"]         = hd["reserved"][channels]
+  # hd["sample_rate"]      = hd["sample_rate"][channels]
+  # hd["channel_labels"]   = hd["channel_labels"][channels]
+  # hd["pre_filter"]       = hd["pre_filter"][channels]
+  hd["num_bytes_header"] = (length(channels)+1) * hd["sample_rate"][1]
 end
 
 """
