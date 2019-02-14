@@ -402,6 +402,7 @@ function downsample_bdf(bdf_in::BioSemiData, dec::Int, filename::String)
 
 end
 
+
 """
 update_header_bdf(hd::Dict, channels::Array{Int})
 Updates header Dict within BioSemiData struct following the selection
@@ -415,20 +416,8 @@ function update_header_bdf!(hd::Dict, channels::Array{Int})
     for field in fields
         hd[field] = hd[field][channels]
     end
-    # hd["physical_min"]     = hd["physical_min"][channels]
-    # hd["physical_max"]     = hd["physical_max"][channels]
-    # hd["digital_min"]      = hd["digital_min"][channels]
-    # hd["digital_max"]      = hd["digital_max"][channels]
-    # hd["scale_factor"]     = hd["scale_factor"][channels]
-    # hd["transducer_type"]  = hd["transducer_type"][channels]
-    # hd["num_samples"]      = hd["num_samples"][channels]
-    # hd["channel_unit"]     = hd["channel_unit"][channels]
-    # hd["reserved"]         = hd["reserved"][channels]
-    # hd["sample_rate"]      = hd["sample_rate"][channels]
-    # hd["channel_labels"]   = hd["channel_labels"][channels]
-    # hd["pre_filter"]       = hd["pre_filter"][channels]
-    # hd["num_bytes_header"] = (length(channels)+1) * hd["sample_rate"][1]
 end
+
 
 """
 channel_idx(labels::Array{String}, channels::Array{String})
@@ -440,6 +429,7 @@ function channel_idx(labels::Array{String}, channels::Array{String})
     println("Selecting channels:", labels[channels])
     return unique(append!(channels, length(labels)))
 end
+
 
 """
 channel_idx(labels::Array{String}, channels::Array{Int})
