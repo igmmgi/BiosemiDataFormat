@@ -219,6 +219,7 @@ function matrix2bdf(data, trigs, status, num_data_records, num_samples, num_chan
                     bdf[pos  ] = (data_val % UInt8)
                     bdf[pos+1] = ((data_val >> 8) % UInt8)
                     bdf[pos+2] = ((data_val >> 16) % UInt8)
+                    pos += 3
                 end
             else  # last channel is Status channel
                 for samp = 1:num_samples
@@ -227,9 +228,9 @@ function matrix2bdf(data, trigs, status, num_data_records, num_samples, num_chan
                     bdf[pos  ] = trig_val % UInt8
                     bdf[pos+1] = (trig_val >> 8) % UInt8
                     bdf[pos+2] = (status_val) % UInt8
+                    pos += 3
                 end
             end
-            pos += 3
         end
     end
     return bdf
