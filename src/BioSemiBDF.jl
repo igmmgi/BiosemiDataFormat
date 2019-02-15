@@ -416,6 +416,7 @@ function update_header_bdf!(hd::Dict, channels::Array{Int})
     for field in fields
         hd[field] = hd[field][channels]
     end
+    hd["num_bytes_header"] = (length(channels)+1) * hd["sample_rate"][1]
 end
 
 
