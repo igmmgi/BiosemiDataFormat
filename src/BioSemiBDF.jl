@@ -93,19 +93,8 @@ function read_bdf(filename::String; header_only::Bool=false, channels::Union{Arr
     dat, time, trig, status = bdf2matrix(bdf, hd["num_channels"], channels, hd["scale_factor"], hd["num_data_records"], hd["num_samples"], hd["sample_rate"])
     channels != collect(1:hd["num_channels"]) && update_header_bdf!(hd, channels)
 
-    # events
-    trig_idx = findall(diff(trig) .>= 1) .+ 1
-    trig_val = trig[trig_idx]
-
-    # create triggers dictionary
-    triggers = Dict{String, Any}(
-                                 "raw"   => trig,
-                                 "idx"   => trig_idx,
-                                 "val"   => trig_val,
-                                 "count" => sort(countmap(trig_val)),
-    "time"  => hcat(trig_val, pushfirst!(diff(trig_idx), 0) / hd["sample_rate"][1])
-   )
-
+    triggers = triggerInfo(trig, hd["sample_rate"][1])
+    
     return BioSemiData(hd, dat, time, triggers, status)
 
 end
@@ -147,6 +136,30 @@ function bdf2matrix(bdf, num_channels, channels, scale_factor, num_data_records,
     time = collect(0:size(dat_chans, 2) - 1) / sample_rate[1]
 
     return dat_chans, time, trig_chan, status_chan
+
+end
+
+"""
+triggerInfo(trig)
+Internal functon used within read_bdf to convert raw trigger line values to
+a summary of trigger information 
+"""
+function triggerInfo(trig, sample_rate)
+
+    # events
+    trig_idx = findall(diff(trig) .>= 1) .+ 1
+    trig_val = trig[trig_idx]
+
+    # create triggers dictionary
+    triggers = Dict{String, Any}(
+                                 "raw"   => trig,
+                                 "idx"   => trig_idx,
+                                 "val"   => trig_val,
+                                 "count" => sort(countmap(trig_val)),
+                                 "time"  => hcat(trig_val, pushfirst!(diff(trig_idx), 0) / sample_rate)
+    )
+    
+    return triggers
 
 end
 
