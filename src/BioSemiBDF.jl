@@ -437,6 +437,9 @@ channel_idx(labels::Array{String}, channels::Array{Int})
 Return channel index given labels and desired selection.
 """
 function channel_idx(labels::Array{String}, channels::Array{Int})
+    if length(channels) == 1 && channels[1] == -1 
+        channels[1] = length(labels)
+    end
     any(channels .> length(labels)) && error("Requested channel number greater than number of channels in file!")
     any(channels .< 1)              && error("Requested channel number less than 1!")
     println("Selecting channels:", labels[channels])
