@@ -280,19 +280,13 @@ function merge_bdf(bdf_in::Array{BioSemiData}, filename::String)
 
     # merged dat_chan Matrix (channels x samples)
     bdf_out.data = hcat((x -> x.data).(bdf_in)...)
-
-    # merged time ans status array
+    
+    # recaculate trigger information
+    bdf_out.triggers = triggerInfo(trig, bdf_out.header["sample_rate"][1])
+    
+    # merged time and status array
     bdf_out.time   = collect(0:size(bdf_out.data, 2) -1) / bdf_in[1].header["sample_rate"][1]
     bdf_out.status = vcat((x -> x.status).(bdf_in)...)
-
-    # merged triggers dict with offset idx
-    for bdf in bdf_in[2:end]
-        idx_offset = size(bdf.data, 2)
-        bdf_out.triggers["idx"] = vcat(bdf_out.triggers["idx"], bdf.triggers["idx"] .+ idx_offset)
-    end
-    bdf_out.triggers["raw"]   = vcat((x -> x.triggers["raw"]).(bdf_in)...)
-    bdf_out.triggers["val"]   = vcat((x -> x.triggers["val"]).(bdf_in)...)
-    bdf_out.triggers["count"] = sort(countmap(bdf_out.triggers["val"]))
 
     return bdf_out
 
