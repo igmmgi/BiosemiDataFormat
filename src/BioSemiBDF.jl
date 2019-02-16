@@ -42,6 +42,7 @@ dat1 = read_bdf("filename1.bdf")
 dat1 = read_bdf("filename1.bdf", header_only = true)
 dat1 = read_bdf("filename1.bdf", channels = [1,3,5])
 dat1 = read_bdf("filename1.bdf", channels = ["Fp1", "Cz"])
+dat1 = read_bdf("filename1.bdf", channels = [-1])  # trigger channel only
 ```
 """
 function read_bdf(filename::String; header_only::Bool=false, channels::Union{Array{Any}, Array{Int}, Array{String}}=[])

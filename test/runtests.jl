@@ -6,7 +6,7 @@ using Test
     bdf_filename = joinpath(dirname(@__FILE__), "Newtest17-256.bdf")
     dat = read_bdf(bdf_filename)
 
-    @test isequal(dat.header["num_bytes_header"], 4608)
+    @test isequal(dat.header["num_bytes_header"], 18*256)
     @test isequal(dat.header["num_channels"], 17)
     @test isequal(dat.header["num_data_records"], 60)
     @test isequal(dat.header["sample_rate"][1], 256)
@@ -35,6 +35,7 @@ end
 
     @test isequal(dat1.data[1,:], dat2.data[1,:])
     @test isequal(dat1.data[5,:], dat2.data[3,:])
+    @test isequal(dat2.header["num_bytes_header"], 5*256)
     @test isequal(dat2.header["num_channels"], 4)
     @test isequal(dat2.header["num_data_records"], 60)
     @test isequal(dat2.header["sample_rate"][1], 256)
@@ -69,7 +70,7 @@ end
     bdf_filename = joinpath(dirname(@__FILE__), "Newtest17-2048.bdf")
     dat = read_bdf(bdf_filename)
 
-    @test isequal(dat.header["num_bytes_header"], 4608)
+    @test isequal(dat.header["num_bytes_header"], 18*256)
     @test isequal(dat.header["num_channels"], 17)
     @test isequal(dat.header["num_data_records"], 60)
     @test isequal(dat.header["sample_rate"][1], 2048)
@@ -98,6 +99,7 @@ end
 
     @test isequal(dat1.data[1,:], dat2.data[1,:])
     @test isequal(dat1.data[5,:], dat2.data[3,:])
+    @test isequal(dat.header["num_bytes_header"], 5*256)
     @test isequal(dat2.header["num_channels"], 4)
     @test isequal(dat2.header["num_data_records"], 60)
     @test isequal(dat2.header["sample_rate"][1], 2048)
@@ -134,7 +136,7 @@ end
     dat2 = read_bdf(bdf_filename)
     dat3 = merge_bdf([dat1, dat2], "merged_datafile")
 
-    @test isequal(dat3.header["num_bytes_header"], 4608)
+    @test isequal(dat3.header["num_bytes_header"], 18*256)
     @test isequal(dat3.header["num_channels"], 17)
     @test isequal(dat3.header["num_data_records"], 120)
     @test isequal(dat3.header["sample_rate"][1], 256)
@@ -152,7 +154,7 @@ end
     dat2 = read_bdf(bdf_filename)
     dat3 = merge_bdf([dat1, dat2], "merged_datafile")
 
-    @test isequal(dat3.header["num_bytes_header"], 4608)
+    @test isequal(dat3.header["num_bytes_header"], 18*256)
     @test isequal(dat3.header["num_channels"], 17)
     @test isequal(dat3.header["num_data_records"], 120)
     @test isequal(dat3.header["sample_rate"][1], 2048)
@@ -171,6 +173,7 @@ end
 
     @test isequal(dat1.data[1,:], dat2.data[1,:])
     @test isequal(dat1.data[5,:], dat2.data[3,:])
+    @test isequal(dat3.header["num_bytes_header"], 5*256)
     @test isequal(dat2.header["num_channels"], 4)
     @test isequal(dat2.header["num_data_records"], 60)
     @test isequal(dat2.header["sample_rate"][1], 256)
@@ -189,6 +192,7 @@ end
 
     @test isequal(dat1.data[1,:], dat2.data[1,:])
     @test isequal(dat1.data[5,:], dat2.data[3,:])
+    @test isequal(dat3.header["num_bytes_header"], 5*256)
     @test isequal(dat2.header["num_channels"], 4)
     @test isequal(dat2.header["num_data_records"], 60)
     @test isequal(dat2.header["sample_rate"][1], 2048)
