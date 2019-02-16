@@ -282,7 +282,7 @@ function merge_bdf(bdf_in::Array{BioSemiData}, filename::String)
     bdf_out.data = hcat((x -> x.data).(bdf_in)...)
     
     # recaculate trigger information
-    trig = hcat((x -> x.triggers["raw"]).(bdf_in)...)
+    trig = vcat((x -> x.triggers["raw"]).(bdf_in)...)
     bdf_out.triggers = triggerInfo(trig, bdf_out.header["sample_rate"][1])
     
     # merged time and status array
