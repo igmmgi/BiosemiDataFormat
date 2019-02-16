@@ -161,7 +161,7 @@ end
     @test isequal(size(dat3.data), (16, 122880*2))
     @test isequal(dat3.triggers["idx"][1], 3353)
     @test isequal(dat3.triggers["val"][1], 255)
-    @test isequal(dat3.triggers["count"][255], 78)
+    @test isequal(dat3.triggers["count"][255], 79)
 
 end
 
