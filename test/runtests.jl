@@ -99,7 +99,7 @@ end
 
     @test isequal(dat1.data[1,:], dat2.data[1,:])
     @test isequal(dat1.data[5,:], dat2.data[3,:])
-    @test isequal(dat.header["num_bytes_header"], 5*256)
+    @test isequal(dat2.header["num_bytes_header"], 5*256)
     @test isequal(dat2.header["num_channels"], 4)
     @test isequal(dat2.header["num_data_records"], 60)
     @test isequal(dat2.header["sample_rate"][1], 2048)
@@ -173,7 +173,7 @@ end
 
     @test isequal(dat1.data[1,:], dat2.data[1,:])
     @test isequal(dat1.data[5,:], dat2.data[3,:])
-    @test isequal(dat3.header["num_bytes_header"], 5*256)
+    @test isequal(dat2.header["num_bytes_header"], 5*256)
     @test isequal(dat2.header["num_channels"], 4)
     @test isequal(dat2.header["num_data_records"], 60)
     @test isequal(dat2.header["sample_rate"][1], 256)
@@ -192,7 +192,7 @@ end
 
     @test isequal(dat1.data[1,:], dat2.data[1,:])
     @test isequal(dat1.data[5,:], dat2.data[3,:])
-    @test isequal(dat3.header["num_bytes_header"], 5*256)
+    @test isequal(dat2.header["num_bytes_header"], 5*256)
     @test isequal(dat2.header["num_channels"], 4)
     @test isequal(dat2.header["num_data_records"], 60)
     @test isequal(dat2.header["sample_rate"][1], 2048)
