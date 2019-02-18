@@ -186,7 +186,7 @@ function write_bdf(bdf_in::BioSemiData, filename::String="")
     [write(fid, UInt8(i)) for i in bdf_in.header["start_date"]]
     [write(fid, UInt8(i)) for i in bdf_in.header["start_time"]]
     [write(fid, UInt8(i)) for i in rpad(string(bdf_in.header["num_bytes_header"]), 8)]
-    [write(fid, UInt8(i)) for i in rpad(bdf_in.header["num_bytes_header"], 44)]
+    [write(fid, UInt8(i)) for i in rpad(bdf_in.header["data_format"], 44)]
     [write(fid, UInt8(i)) for i in rpad(string(bdf_in.header["num_data_records"]), 8)]
     [write(fid, UInt8(i)) for i in rpad(string(bdf_in.header["duration_data_records"]), 8)]
     [write(fid, UInt8(i)) for i in rpad(string(bdf_in.header["num_channels"]), 4)]
