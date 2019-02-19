@@ -308,7 +308,7 @@ dat1 = delete_channels_bdf(dat, ["Fp1", "F1"])
 """
 function delete_channels_bdf(bdf_in::BioSemiData, channels::Union{Array{Int}, Array{String}})
     bdf_out = deepcopy(bdf_in)
-    channels = channel_idx(bdf_out.header["channel_labels"], channels)
+    channels = channel_idx(bdf_out.header["channel_labels"], channels, "Deleting")
     channels = filter(x -> !(x in channels), collect(1:length(bdf_in.header["channel_labels"])))
     update_header_bdf!(bdf_out.header, channels)
     bdf_out.data = bdf_out.data[channels[1:end-1], :]
@@ -329,7 +329,7 @@ dat1 = select_channels_bdf(dat, ["Fp1", "F1"])
 """
 function select_channels_bdf(bdf_in::BioSemiData, channels::Union{Array{Int}, Array{String}})
     bdf_out = deepcopy(bdf_in)
-    channels = channel_idx(bdf_out.header["channel_labels"], channels)
+    channels = channel_idx(bdf_out.header["channel_labels"], channels, "Selecting")
     update_header_bdf!(bdf_out.header, channels)
     bdf_out.data = bdf_out.data[channels[1:end-1], :]
     return bdf_out
@@ -452,28 +452,31 @@ end
 
 
 """
-channel_idx(labels::Array{String}, channels::Array{String})
+channel_idx(labels::Array{String}, channels::Array{String}, msg::String)
 Return channel index given labels and desired selection.
 """
 function channel_idx(labels::Array{String}, channels::Array{String})
     channels = [findfirst(x .== labels) for x in channels]
     any(channels .== nothing) && error("A requested channel label is not in the bdf file!")
-    println("Selecting channels:", labels[channels])
+    channels = sort(channels)
+    println(msg, "channels:", labels[channels])
     return unique(append!(channels, length(labels)))
 end
 
 
 """
-channel_idx(labels::Array{String}, channels::Array{Int})
+channel_idx(labels::Array{String}, channels::Array{Int}, msg::String)
 Return channel index given labels and desired selection.
 """
 function channel_idx(labels::Array{String}, channels::Array{Int})
-    if length(channels) == 1 && channels[1] == -1 
-        channels[1] = length(labels)
+    trigSelected = findall(x -> x == -1, channels)
+    if length(trigSelected)
+        channels[trigSelected] = length(labels)
     end
     any(channels .> length(labels)) && error("Requested channel number greater than number of channels in file!")
     any(channels .< 1)              && error("Requested channel number less than 1!")
-    println("Selecting channels:", labels[channels])
+    channels = sort(channels)
+    println(msg, "channels:", labels[channels])
     return unique(append!(channels, length(labels)))
 end
 
