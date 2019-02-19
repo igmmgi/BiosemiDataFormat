@@ -308,7 +308,7 @@ dat1 = delete_channels_bdf(dat, ["Fp1", "F1"])
 """
 function delete_channels_bdf(bdf_in::BioSemiData, channels::Union{Array{Int}, Array{String}})
     bdf_out = deepcopy(bdf_in)
-    channels = channel_idx(bdf_out.header["channel_labels"], channels, "Deleting")
+    channels = channel_idx(bdf_out.header["channel_labels"], channels)
     channels = filter(x -> !(x in channels), collect(1:length(bdf_in.header["channel_labels"])))
     update_header_bdf!(bdf_out.header, channels)
     bdf_out.data = bdf_out.data[channels[1:end-1], :]
@@ -329,7 +329,7 @@ dat1 = select_channels_bdf(dat, ["Fp1", "F1"])
 """
 function select_channels_bdf(bdf_in::BioSemiData, channels::Union{Array{Int}, Array{String}})
     bdf_out = deepcopy(bdf_in)
-    channels = channel_idx(bdf_out.header["channel_labels"], channels, "Selecting")
+    channels = channel_idx(bdf_out.header["channel_labels"], channels)
     update_header_bdf!(bdf_out.header, channels)
     bdf_out.data = bdf_out.data[channels[1:end-1], :]
     return bdf_out
