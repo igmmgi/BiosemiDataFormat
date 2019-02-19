@@ -8,6 +8,7 @@ export
 crop_bdf,
 downsample_bdf,
 merge_bdf,
+delete_channels_bdf,
 select_channels_bdf,
 read_bdf,
 write_bdf
@@ -291,6 +292,27 @@ function merge_bdf(bdf_in::Array{BioSemiData}, filename::String)
 
     return bdf_out
 
+end
+
+
+"""
+delete_channels_bdf(bdf_in::BioSemiData, channels::Union{Array{Int}, Array{String}})
+Delete specific channels from BioSemiData struct. Channels can be specified
+using channel numbers or channel labels.
+### Examples:
+```julia
+dat1 = read_bdf("filename1.bdf")
+dat1 = delete_channels_bdf(dat, [1, 2])
+dat1 = delete_channels_bdf(dat, ["Fp1", "F1"])
+```
+"""
+function delete_channels_bdf(bdf_in::BioSemiData, channels::Union{Array{Int}, Array{String}})
+    bdf_out = deepcopy(bdf_in)
+    channels = channel_idx(bdf_out.header["channel_labels"], channels)
+    channels = filter(x -> !(x in channels), collect(1:length(bdf_in.header["channel_labels"])))
+    update_header_bdf!(bdf_out.header, channels)
+    bdf_out.data = bdf_out.data[channels[1:end-1], :]
+    return bdf_out
 end
 
 
