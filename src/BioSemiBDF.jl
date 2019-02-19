@@ -455,7 +455,7 @@ end
 channel_idx(labels::Array{String}, channels::Array{String}, msg::String)
 Return channel index given labels and desired selection.
 """
-function channel_idx(labels::Array{String}, channels::Array{String})
+function channel_idx(labels::Array{String}, channels::Array{String}, msg::String)
     channels = [findfirst(x .== labels) for x in channels]
     any(channels .== nothing) && error("A requested channel label is not in the bdf file!")
     channels = sort(channels)
@@ -468,7 +468,7 @@ end
 channel_idx(labels::Array{String}, channels::Array{Int}, msg::String)
 Return channel index given labels and desired selection.
 """
-function channel_idx(labels::Array{String}, channels::Array{Int})
+function channel_idx(labels::Array{String}, channels::Array{Int}, msg::String)
     trigSelected = findall(x -> x == -1, channels)
     if length(trigSelected)
         channels[trigSelected] = length(labels)
