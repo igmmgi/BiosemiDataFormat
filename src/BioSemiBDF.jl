@@ -470,7 +470,7 @@ Return channel index given labels and desired selection.
 """
 function channel_idx(labels::Array{String}, channels::Array{Int}, msg::String)
     trigSelected = findall(x -> x == -1, channels)
-    if length(trigSelected)
+    if length(trigSelected) > 0
         channels[trigSelected] = length(labels)
     end
     any(channels .> length(labels)) && error("Requested channel number greater than number of channels in file!")
