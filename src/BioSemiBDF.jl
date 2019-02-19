@@ -452,31 +452,31 @@ end
 
 
 """
-channel_idx(labels::Array{String}, channels::Array{String}, msg::String)
+channel_idx(labels::Array{String}, channels::Array{String})
 Return channel index given labels and desired selection.
 """
-function channel_idx(labels::Array{String}, channels::Array{String}, msg::String)
+function channel_idx(labels::Array{String}, channels::Array{String})
     channels = [findfirst(x .== labels) for x in channels]
     any(channels .== nothing) && error("A requested channel label is not in the bdf file!")
     channels = sort(unique(channels))
-    println(msg, " channels:", labels[channels])
+    println("Channels: ", labels[channels])
     return unique(append!(channels, length(labels)))
 end
 
 
 """
-channel_idx(labels::Array{String}, channels::Array{Int}, msg::String)
+channel_idx(labels::Array{String}, channels::Array{Int})
 Return channel index given labels and desired selection.
 """
-function channel_idx(labels::Array{String}, channels::Array{Int}, msg::String)
+function channel_idx(labels::Array{String}, channels::Array{Int})
     trigSelected = findall(x -> x == -1, channels)
     if length(trigSelected) > 0
         channels[trigSelected] = repeat([length(labels)], length(trigSelected))
     end
-    any(channels .> length(labels)) && error("Requested channel number greater than number of channels in file!")
-    any(channels .< 1)              && error("Requested channel number less than 1!")
+    any(channels .> length(labels)) && error("A requested channel number greater than number of channels in file!")
+    any(channels .< 1)              && error("A requested channel number less than 1!")
     channels = sort(unique(channels))
-    println(msg, " channels:", labels[channels])
+    println("Channels:", labels[channels])
     return unique(append!(channels, length(labels)))
 end
 
