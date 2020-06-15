@@ -1,8 +1,9 @@
 module BioSemiBDF
 
 using
-StatsBase,
-DSP
+DSP,
+OrderedCollections,
+StatsBase
 
 export
 crop_bdf,
@@ -156,7 +157,7 @@ function triggerInfo(trig, sample_rate)
                                  "raw"   => trig,
                                  "idx"   => trig_idx,
                                  "val"   => trig_val,
-                                 "count" => sort(countmap(trig_val)),
+                                 "count" => sort!(OrderedDict(countmap(trig_val))),
                                  "time"  => hcat(trig_val, pushfirst!(diff(trig_idx), 0) / sample_rate)
     )
     
@@ -388,7 +389,7 @@ function crop_bdf(bdf_in::BioSemiData, crop_type::String, val::Array{Int}, filen
     bdf_out.triggers["raw"]   = bdf_out.triggers["raw"][idxStart:idxEnd]
     bdf_out.triggers["idx"]   = bdf_out.triggers["idx"][trigStart:trigEnd]
     bdf_out.triggers["val"]   = bdf_out.triggers["val"][trigStart:trigEnd]
-    bdf_out.triggers["count"] = sort(countmap(bdf_out.triggers["val"]))
+    bdf_out.triggers["count"] = sort!(OrderedDict(countmap(bdf_out.triggers["val"])))
 
     return bdf_out
 
