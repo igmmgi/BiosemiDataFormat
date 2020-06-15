@@ -1,0 +1,4 @@
+name = "BioSemiBDF"
+uuid = "a3de4587-8446-46d4-b2c0-97cb6a7d9b0d"
+authors = ["ian <ian.mackenzie@uni-tuebingen.de>"]
+version = "0.1.0"
