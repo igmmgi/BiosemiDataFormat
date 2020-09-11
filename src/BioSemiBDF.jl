@@ -15,12 +15,13 @@ read_bdf,
 write_bdf
 
 mutable struct BioSemiData
-    header::Dict
-    data::Matrix
-    time::Array
-    triggers::Dict
-    status::Array
+    header
+    data
+    time
+    triggers
+    status
 end
+
 
 """
 read_bdf(filename::String; header_only::Bool=false, channels::Union{Array{Any}, Array{Int}, Array{String}}}=[])
@@ -48,7 +49,7 @@ dat1 = read_bdf("filename1.bdf", channels = [-1])  # trigger channel only
 """
 
 function read_bdf(filename::String; header_only::Bool=false, channels::Union{Array{Any},Array{Int},Array{String}}=[])
-    
+   
     fid = open(filename, "r")
 
     # create header dictionary
@@ -66,13 +67,13 @@ function read_bdf(filename::String; header_only::Bool=false, channels::Union{Arr
     channel_labels = split(String(read!(fid, Array{UInt8}(undef, 16 * num_channels))))
     transducer_type = split(String(read!(fid, Array{UInt8}(undef, 80 * num_channels))), r"[ ]{2,}", keepempty=false)
     channel_unit = split(String(read!(fid, Array{UInt8}(undef,  8 * num_channels)))) 
-    physical_min = [parse(Int, ascii(String(read!(fid, Array{UInt8}(undef,  8))))) for _ in 1:num_channels]
-    physical_max = [parse(Int, ascii(String(read!(fid, Array{UInt8}(undef,  8))))) for _ in 1:num_channels]
-    digital_min  = [parse(Int, ascii(String(read!(fid, Array{UInt8}(undef,  8))))) for _ in 1:num_channels]
-    digital_max  = [parse(Int, ascii(String(read!(fid, Array{UInt8}(undef,  8))))) for _ in 1:num_channels]
+    physical_min = parse.(Int, [String(read!(fid, Array{UInt8}(undef,  8))) for _ in 1:num_channels])
+    physical_max = parse.(Int, [String(read!(fid, Array{UInt8}(undef,  8))) for _ in 1:num_channels])
+    digital_min  = parse.(Int, [String(read!(fid, Array{UInt8}(undef,  8))) for _ in 1:num_channels])
+    digital_max  = parse.(Int, [String(read!(fid, Array{UInt8}(undef,  8))) for _ in 1:num_channels])
     pre_filter = split(String(read!(fid, Array{UInt8}(undef, 80 * num_channels))), r"[ ]{2,}", keepempty=false)
-    num_samples = [parse(Int, ascii(String(read!(fid, Array{UInt8}(undef,  8))))) for _ in 1:num_channels] 
-    reserved = split(String(read!(fid, Array{UInt8}(undef,  32 * num_channels))))
+    num_samples = parse.(Int, [String(read!(fid, Array{UInt8}(undef,  8))) for _ in 1:num_channels])
+    reserved = split(String(read!(fid, Array{UInt8}(undef, 32 * num_channels))))
     scale_factor = convert(Array{Float32}, ((physical_max .- physical_min) ./ (digital_max .- digital_min)))
     sample_rate = convert(Array{Int}, num_samples ./ duration_data_records)   
     
@@ -118,7 +119,7 @@ function read_bdf(filename::String; header_only::Bool=false, channels::Union{Arr
     channels != 1:num_channels && update_header_bdf!(hd, channels)
 
     triggers = triggerInfo(trig, sample_rate[1])
-    
+
     return BioSemiData(hd, dat, time, triggers, status)
 
 end
@@ -157,7 +158,7 @@ function bdf2matrix(bdf, num_channels, channels, scale_factor, num_data_records,
             end
         end
     end
-    time = (0:size(dat_chans, 2) - 1) / sample_rate
+    time = (0:size(dat_chans, 2) - 1) / sample_rate 
 
     return dat_chans, time, trig_chan, status_chan
 
