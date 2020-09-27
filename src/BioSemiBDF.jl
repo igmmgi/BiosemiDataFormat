@@ -3,7 +3,8 @@ module BioSemiBDF
 using
 DSP,
 OrderedCollections,
-StatsBase
+StatsBase,
+Unitful
 
 export
 crop_bdf!,
@@ -61,6 +62,25 @@ mutable struct BioSemiData
     status
 end
 
+function Base.show(io::IO, hdr::BioSemiHeader)
+    println("Number of Channels: ", length(hdr.channel_labels) -1)
+    println("Channel Labels: ", join(hdr.channel_labels[1:end-1], ", "))
+    println("Number of Data Records: ", hdr.num_data_records)
+    println("Sample Rate: ", hdr.sample_rate[1])
+end
+
+function Base.show(io::IO, trig::BioSemiTriggers)
+    println("Triggers (Value => Count): ", join(trig.count, ", "))
+end
+
+function Base.show(io::IO, dat::BioSemiData)
+    println("Filename: ", dat.filename)
+    print(dat.header)
+    println("Data Size: ", size(dat.data))
+    println(dat.triggers)
+end
+
+
 
 """
 read_bdf(filename::String; header_only::Bool=false, channels::Union{Array{Any}, Array{Int}, Array{String}}}=[])
@@ -72,10 +92,10 @@ See https://www.biosemi.com/faq_file_format.htm for file format details.
 * channels Array Int/String
 ### Outputs:
 * BioSemiData struct with the following fields
-* header Dict
-* data (channels * samples) Matrix
+* header BioSemiHeader
+* data (samples * channels) Matrix
 * time
-* triggers Dict
+* triggers BioSemiTriggers
 * status Array
 ### Examples:
 ```julia
@@ -141,6 +161,7 @@ function read_bdf(filename::String; header_only::Bool=false, channels::Union{Arr
 end
 
 
+
 """
 bdf2matrix(bdf, num_channels, channels, scale_factor, num_data_records, num_samples)
 Internal functon used within read_bdf to read BioSemi 24bit data representation
@@ -148,29 +169,30 @@ into julia data array/matrix
 """
 function bdf2matrix(bdf, num_channels, channels, scale_factor, num_data_records, num_samples, sample_rate)
 
-    dat_chans   = Matrix{Float32}(undef, length(channels) - 1, (num_data_records * num_samples))
-    time        = (0:size(dat_chans, 2) - 1) / sample_rate 
+    dat_chans   = Matrix{Float32}(undef, (num_data_records * num_samples), length(channels) - 1)
+    time        = time_bdf(sample_rate, num_data_records)
     trig_chan   = Array{Int16}(undef, num_data_records * num_samples)
     status_chan = Array{Int16}(undef, num_data_records * num_samples)
 
     pos = 1;
     for rec = 0:(num_data_records - 1)
-        idx = 1
+        offset = rec * num_samples
+        chan_idx = 1
         for chan = 1:num_channels
             if chan in channels  # selected channel
                 if chan < num_channels
                     for samp = 1:num_samples 
-                        @inbounds dat_chans[idx, rec * num_samples + samp] = Float32(((Int32(bdf[pos]) << 8) | (Int32(bdf[pos + 1]) << 16) | (Int32(bdf[pos + 2]) << 24)) >> 8) * scale_factor[chan] 
+                        @inbounds dat_chans[offset + samp, chan_idx] = Float32(((Int32(bdf[pos]) << 8) | (Int32(bdf[pos + 1]) << 16) | (Int32(bdf[pos + 2]) << 24)) >> 8) * scale_factor[chan] 
                         pos += 3 
                     end 
                 else  # last channel is always Status channel
                     for samp = 1:num_samples
-                        @inbounds trig_chan[rec * num_samples + samp] = ((Int16(bdf[pos])) | (Int16(bdf[pos + 1]) << 8))
-                        @inbounds status_chan[rec * num_samples + samp] = Int16(bdf[pos + 2])
+                        @inbounds trig_chan[offset + samp] = ((Int16(bdf[pos])) | (Int16(bdf[pos + 1]) << 8))
+                        @inbounds status_chan[offset + samp] = Int16(bdf[pos + 2])
                         pos += 3
                     end
                 end
-                idx += 1
+                chan_idx += 1
             else # channel not selected
                 pos += num_samples * 3
             end
@@ -180,6 +202,8 @@ function bdf2matrix(bdf, num_channels, channels, scale_factor, num_data_records,
     return dat_chans, time, trig_chan, status_chan
 
 end
+
+
 
 
 """
@@ -239,7 +263,7 @@ function write_bdf(bdf_in::BioSemiData, filename::String="")
     [write(fid, UInt8(j)) for i in bdf_in.header.num_samples for j in rpad(i, 8)]
     [write(fid, UInt8(j)) for i in bdf_in.header.reserved for j in rpad(i, 32)]
 
-    data             = round.(Int32, (bdf_in.data ./ bdf_in.header.scale_factor[1:end - 1]))
+    data             = round.(Int32, (bdf_in.data ./ transpose(bdf_in.header.scale_factor[1:end - 1])))
     trigs            = bdf_in.triggers.raw
     status           = bdf_in.status
     num_data_records = bdf_in.header.num_data_records
@@ -267,7 +291,7 @@ function matrix2bdf(data, trigs, status, num_data_records, num_samples, num_chan
         for chan = 1:num_channels
             if chan < num_channels
                 for samp = 1:num_samples
-                    data_val   = data[chan, rec * num_samples + samp]
+                    data_val   = data[rec * num_samples + samp, chan]
                     bdf[pos  ] = (data_val % UInt8)
                     bdf[pos + 1] = ((data_val >> 8) % UInt8)
                     bdf[pos + 2] = ((data_val >> 16) % UInt8)
@@ -313,23 +337,27 @@ function merge_bdf(bdfs::Array{BioSemiData})
 
     # make copy so that bdf_in is not altered
     bdf_out = deepcopy(bdfs[1])
+    
+    # merge data
     bdf_out.header.num_data_records = sum((x -> x.header.num_data_records).(bdfs))
-
-    # merged dat_chan Matrix (channels x samples)
-    bdf_out.data = hcat((x -> x.data).(bdfs)...)
+    bdf_out.data = vcat((x -> x.data).(bdfs)...)
+    bdf_out.status = vcat((x -> x.status).(bdfs)...)
     
     # recaculate trigger information
     trig = vcat((x -> x.triggers.raw).(bdfs)...)
     bdf_out.triggers = triggerInfo(trig, bdf_out.header.sample_rate[1])
     
-    # merged time and status array
-    bdf_out.time   = (0:size(bdf_out.data, 2) - 1) / bdfs[1].header.sample_rate[1]
-    bdf_out.status = vcat((x -> x.status).(bdfs)...)
+    # merged time 
+    println(sample_rate)
+    bdf_out.time = time_bdf(bdf_out.header.sample_rate[1], bdf_out.header.num_data_records)
 
     return bdf_out
 
 end
 
+function time_bdf(sample_rate::Int, num_data_records::Int)
+    return 0Unitful.s: 1Unitful.s/sample_rate: ((num_data_records - (1/sample_rate))Unitful.s)
+end
 
 """
 delete_channels_bdf(bdf_in::BioSemiData, channels::Union{Array{Int}, Array{String}})
@@ -374,14 +402,14 @@ function select_channels_bdf(bdf_in::BioSemiData, channels::Union{Array{Int},Arr
     bdf_out = deepcopy(bdf_in)
     channels = channel_idx(bdf_out.header.channel_labels, channels)
     update_header_bdf!(bdf_out.header, channels)
-    bdf_out.data = bdf_out.data[channels[1:end - 1], :]
+    bdf_out.data = bdf_out.data[:, channels[1:end - 1]]
     return bdf_out
 end
 
 function select_channels_bdf!(bdf::BioSemiData, channels::Union{Array{Int},Array{String}})
     channels = channel_idx(bdf.header.channel_labels, channels)
     update_header_bdf!(bdf.header, channels)
-    bdf.data = bdf.data[channels[1:end - 1], :]
+    bdf.data = bdf.data[:, channels[1:end - 1]]
 end
 
 
@@ -408,15 +436,15 @@ function crop_bdf(bdf_in::BioSemiData, crop_type::String, val::Array{Int})
     # copy data and crop
     bdf_out = deepcopy(bdf_in)
     bdf_out.header.num_data_records = Int(((idxEnd - idxStart) + 1) / sample_rate)
-    bdf_out.data = bdf_out.data[:, idxStart:idxEnd]
-    bdf_out.time = (0:size(bdf_out.data, 2) - 1) / bdf_out.header.sample_rate[1]
-    bdf_out.status = bdf_out.status[idxStart:idxEnd]
 
-    # update triggers
-    bdf_out.triggers.raw   = bdf_out.triggers.raw[idxStart:idxEnd]
-    bdf_out.triggers.idx   = bdf_out.triggers.idx[trigStart:trigEnd]
-    bdf_out.triggers.val   = bdf_out.triggers.val[trigStart:trigEnd]
-    bdf_out.triggers.count = sort!(OrderedDict(countmap(bdf_out.triggers.val)))
+    bdf_out.data = bdf_out.data[idxStart:idxEnd, :]
+
+    bdf_out.time = time_bdf(bdf_out.header.sample_rate[1], bdf_out.header.num_data_records)
+    bdf_out.status = bdf_out.status[idxStart:idxEnd]
+   
+    # recaculate trigger information
+    trig = bdf_out.triggers.raw[idxStart:idxEnd]
+    bdf_out.triggers = triggerInfo(trig, bdf_out.header.sample_rate[1])
 
     return bdf_out
 
@@ -431,17 +459,17 @@ function crop_bdf!(bdf::BioSemiData, crop_type::String, val::Array{Int})
 
     idxStart, idxEnd, trigStart, trigEnd = find_crop_index(bdf_in.triggers, crop_type, val, sample_rate, nsamples)
 
-    # copy data and crop
+    # crop
     bdf.header.num_data_records = Int(((idxEnd - idxStart) + 1) / sample_rate)
-    bdf.data = bdf.data[:, idxStart:idxEnd]
-    bdf.time = (0:size(bdf.data, 2) - 1) / bdf.header.sample_rate[1]
-    bdf.status = bdf.status[idxStart:idxEnd]
 
-    # update triggers
-    bdf.triggers.raw   = bdf.triggers.raw[idxStart:idxEnd]
-    bdf.triggers.idx   = bdf.triggers.idx[trigStart:trigEnd]
-    bdf.triggers.val   = bdf.triggers.val[trigStart:trigEnd]
-    bdf.triggers.count = sort!(OrderedDict(countmap(bdf.triggers.val)))
+    bdf.data = bdf.data[idxStart:idxEnd, :]
+
+    bdf_out.time = time_bdf(bdf_out.header.sample_rate[1], bdf_out.header.num_data_records)
+    bdf.status = bdf.status[idxStart:idxEnd]
+  
+    # recaculate trigger information
+    trig = bdf_out.triggers.raw[idxStart:idxEnd]
+    bdf_out.triggers = triggerInfo(trig, bdf_out.header.sample_rate[1])
 
 end
 
@@ -456,12 +484,12 @@ function find_crop_index(triggers::BioSemiTriggers, crop_type::String, val::Arra
         idxStart  = triggers.idx[trigStart]
         idxStart  = findfirst(borders .>= idxStart) * sample_rate
         idxEnd    = triggers.idx[trigEnd]
-        idxEnd    = (findlast(borders  .<= idxEnd)   * sample_rate) - 1
+        idxEnd    = (findlast(borders  .<= idxEnd) * sample_rate) - 1
 
     elseif crop_type == "records"
 
         idxStart  = ((val[1] - 1) * sample_rate) + 1
-        idxEnd    =  (val[2]    * sample_rate)
+        idxEnd    =  (val[2] * sample_rate)
         trigStart = findfirst(triggers.idx .>= idxStart)
         trigEnd   = findlast(triggers.idx  .<= idxEnd)
 
@@ -492,19 +520,19 @@ function downsample_bdf(bdf_in::BioSemiData, dec::Int)
     ndec = div(nsamp, dec)
 
     bdf_out = deepcopy(bdf_in)
-    data = Matrix{Float32}(undef, size(bdf_out.data, 1), div(size(bdf_out.data, 2), dec))
-    for i in 1:size(bdf_out.data, 1)
-        tmp_dat    = resample([reverse(bdf_out.data[i, 1:nsamp]); bdf_out.data[i, :]; reverse(bdf_out.data[i, end - (nsamp - 1):end])], 1 / dec)
-        data[i, :] = convert(Array{Float32}, tmp_dat[ndec + 1:end - ndec])
+    data = Matrix{Float32}(undef, div(size(bdf_out.data, 1), dec), size(bdf_out.data, 2))
+    for i in 1:size(bdf_out.data, 2)
+        tmp_dat    = resample([reverse(bdf_out.data[1:nsamp, i]); bdf_out.data[:, i]; reverse(bdf_out.data[end - (nsamp - 1):end, i])], 1 / dec)
+        data[:, i] = convert(Array{Float32}, tmp_dat[ndec + 1:end - ndec])
     end
     bdf_out.data = data
 
     bdf_out.header.sample_rate = div.(bdf_out.header.sample_rate, dec)
     bdf_out.header.num_samples = div.(bdf_out.header.num_samples, dec)
-    bdf_out.time = (0:size(bdf_out.data, 2) - 1) / bdf_out.header.sample_rate[1]
+    bdf_out.time = (0:size(bdf_out.data, 1) - 1) / bdf_out.header.sample_rate[1]
 
     # update triggers
-    bdf_out.triggers.raw = zeros(Int16, 1, size(bdf_out.data, 2))
+    bdf_out.triggers.raw = zeros(Int16, 1, size(bdf_out.data, 1))
     bdf_out.triggers.idx = convert(Array{Int64}, round.(bdf_out.triggers.idx / dec))
     bdf_out.triggers.raw[bdf_out.triggers.idx] = bdf_out.triggers.val
 
@@ -520,19 +548,19 @@ function downsample_bdf!(bdf::BioSemiData, dec::Int)
     nsamp = dec * 20  # enough samples?
     ndec = div(nsamp, dec)
 
-    data = Matrix{Float32}(undef, size(bdf.data, 1), div(size(bdf.data, 2), dec))
+    data = Matrix{Float32}(undef, div(size(bdf.data, 1), dec), size(bdf.data, 2))
     for i in 1:size(bdf.data, 1)
-        tmp_dat    = resample([reverse(bdf.data[i, 1:nsamp]); bdf.data[i, :]; reverse(bdf.data[i, end - (nsamp - 1):end])], 1 / dec)
-        data[i, :] = convert(Array{Float32}, tmp_dat[ndec + 1:end - ndec])
+        tmp_dat    = resample([reverse(bdf.data[1:nsamp, :]); bdf.data[:, i]; reverse(bdf.data[end - (nsamp - 1):end, i])], 1 / dec)
+        data[:, i] = convert(Array{Float32}, tmp_dat[ndec + 1:end - ndec])
     end
     bdf.data = data
 
     bdf.header.sample_rate = div.(bdf.header.sample_rate, dec)
     bdf.header.num_samples = div.(bdf.header.num_samples, dec)
-    bdf.time = (0:size(bdf.data, 2) - 1) / bdf.header.sample_rate[1]
+    bdf.time = (0:size(bdf.data, 1) - 1) / bdf.header.sample_rate[1]
 
     # update triggers
-    bdf.triggers.raw = zeros(Int16, 1, size(bdf.data, 2))
+    bdf.triggers.raw = zeros(Int16, 1, size(bdf.data, 1))
     bdf.triggers.idx = convert(Array{Int64}, round.(bdf.triggers.idx / dec))
     bdf.triggers.raw[bdf.triggers.idx] = bdf.triggers.val
 
@@ -569,9 +597,7 @@ Return channel index given labels and desired selection.
 function channel_idx(labels, channels::Array{String})
     channels = [findfirst(x .== labels) for x in channels]
     any(channels .=== nothing) && error("A requested channel label is not in the bdf file!")
-    channels = sort(unique(channels))
-    println("Channels: ", labels[channels])
-    return unique(append!(channels, length(labels)))
+    return sort(unique(append!(channels, length(labels))))
 end
 
 
@@ -586,11 +612,7 @@ function channel_idx(labels, channels::Array{Int})
     end
     any(channels .> length(labels)) && error("A requested channel number greater than number of channels in file!")
     any(channels .< 1)              && error("A requested channel number less than 1!")
-    channels = sort(unique(channels))
-    println("Channels:", labels[channels])
-    return unique(append!(channels, length(labels)))
+    return sort(unique(append!(channels, length(labels))))
 end
 
-
 end
-
