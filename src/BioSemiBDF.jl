@@ -3,7 +3,7 @@ module BioSemiBDF
 using
 DSP,
 OrderedCollections,
-StatsBase,
+StatsBase
 
 export
 crop_bdf!,
