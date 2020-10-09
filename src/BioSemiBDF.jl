@@ -4,7 +4,6 @@ using
 DSP,
 OrderedCollections,
 StatsBase,
-Unitful
 
 export
 crop_bdf!,
@@ -170,7 +169,7 @@ into julia data array/matrix
 function bdf2matrix(bdf, num_channels, channels, scale_factor, num_data_records, num_samples, sample_rate)
 
     dat_chans   = Matrix{Float32}(undef, (num_data_records * num_samples), length(channels) - 1)
-    time        = time_bdf(sample_rate, num_data_records)
+    time        = time_range(sample_rate, num_data_records)
     trig_chan   = Array{Int16}(undef, num_data_records * num_samples)
     status_chan = Array{Int16}(undef, num_data_records * num_samples)
 
@@ -349,14 +348,14 @@ function merge_bdf(bdfs::Array{BioSemiData})
     
     # merged time 
     println(sample_rate)
-    bdf_out.time = time_bdf(bdf_out.header.sample_rate[1], bdf_out.header.num_data_records)
+    bdf_out.time = time_range(bdf_out.header.sample_rate[1], bdf_out.header.num_data_records)
 
     return bdf_out
 
 end
 
-function time_bdf(sample_rate::Int, num_data_records::Int)
-    return 0Unitful.s: 1Unitful.s/sample_rate: ((num_data_records - (1/sample_rate))Unitful.s)
+function time_range(sample_rate::Int, num_data_records::Int)
+    return 0 : 1/sample_rate: (num_data_records - (1/sample_rate))
 end
 
 """
@@ -439,7 +438,7 @@ function crop_bdf(bdf_in::BioSemiData, crop_type::String, val::Array{Int})
 
     bdf_out.data = bdf_out.data[idxStart:idxEnd, :]
 
-    bdf_out.time = time_bdf(bdf_out.header.sample_rate[1], bdf_out.header.num_data_records)
+    bdf_out.time = time_range(bdf_out.header.sample_rate[1], bdf_out.header.num_data_records)
     bdf_out.status = bdf_out.status[idxStart:idxEnd]
    
     # recaculate trigger information
@@ -464,7 +463,7 @@ function crop_bdf!(bdf::BioSemiData, crop_type::String, val::Array{Int})
 
     bdf.data = bdf.data[idxStart:idxEnd, :]
 
-    bdf_out.time = time_bdf(bdf_out.header.sample_rate[1], bdf_out.header.num_data_records)
+    bdf_out.time = time_range(bdf_out.header.sample_rate[1], bdf_out.header.num_data_records)
     bdf.status = bdf.status[idxStart:idxEnd]
   
     # recaculate trigger information
