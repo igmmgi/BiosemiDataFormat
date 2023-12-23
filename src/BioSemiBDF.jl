@@ -1,8 +1,6 @@
 module BioSemiBDF
 
-using
-  DSP,
-  OrderedCollections
+using DSP, OrderedCollections
 
 export
   crop_bdf!,
@@ -211,18 +209,16 @@ a summary of trigger information
 """
 function triggerInfo(trig_raw, sample_rate)
 
-  # trigger events
+  # trigger events + time
   trig_idx = findall(diff(trig_raw) .>= 1) .+ 1
   trig_val = trig_raw[trig_idx]
+  trig_time = hcat(trig_val, pushfirst!(diff(trig_idx), 0) / sample_rate)
 
-  # unique trigger + count
+  # unique triggers + count
   trig_count = OrderedDict(i => 0 for i in sort!(collect(Set(trig_val))))
   for val in trig_val
     trig_count[val] += 1
   end
-
-  trig_count = Dict(sort(collect(trig_count), by=x -> x[1]))
-  trig_time = hcat(trig_val, pushfirst!(diff(trig_idx), 0) / sample_rate)
 
   triggers = BioSemiTriggers(trig_raw, trig_idx, trig_val, trig_count, trig_time)
 
