@@ -59,48 +59,48 @@ mutable struct BioSemiData
 end
 
 function Base.show(io::IO, hdr::BioSemiHeader)
-  println("Number of Channels: ", length(hdr.channel_labels) - 1)
-  println("Channel Labels: ", join(hdr.channel_labels[1:end-1], ", "))
-  println("Number of Data Records: ", hdr.num_data_records)
-  println("Sample Rate: ", hdr.sample_rate[1])
+  println(io, "Number of Channels: ", length(hdr.channel_labels) - 1)
+  println(io, "Channel Labels: ", join(hdr.channel_labels[1:end-1], ", "))
+  println(io, "Number of Data Records: ", hdr.num_data_records)
+  println(io, "Sample Rate: ", hdr.sample_rate[1])
 end
 
 function Base.show(io::IO, trig::BioSemiTriggers)
-  println("Triggers (Value => Count): ", join(trig.count, ", "))
+  println(io, "Triggers (Value => Count): ", join(trig.count, ", "))
 end
 
 function Base.show(io::IO, dat::BioSemiData)
-  println("Filename: ", dat.filename)
-  print(dat.header)
-  println("Data Size: ", size(dat.data))
-  println(dat.triggers)
+  println(io, "Filename: $(dat.filename)")
+  print(io, dat.header)
+  println(io, "Data Size: $(size(dat.data))")
+  println(io, dat.triggers)
 end
-
 
 
 """
 read_bdf(filename::String; header_only::Bool=false, channels::Union{Array{Any}, Array{Int}, Array{String}}}=[])
-Reads BioSemi Data Format (bdf) files.
-See https://www.biosemi.com/faq_file_format.htm for file format details.
-### Inputs:
-* filename String
-* header_only Bool=false
-* channels Array Int/String
-### Outputs:
-* BioSemiData struct with the following fields
-* header BioSemiHeader
-* data (samples * channels) Matrix
-* time
-* triggers BioSemiTriggers
-* status Array
-### Examples:
-```julia
-dat1 = read_bdf("filename1.bdf")
-dat1 = read_bdf("filename1.bdf", header_only = true)
-dat1 = read_bdf("filename1.bdf", channels = [1,3,5])
-dat1 = read_bdf("filename1.bdf", channels = ["Fp1", "Cz"])
-dat1 = read_bdf("filename1.bdf", channels = [-1])  # trigger channel only
-```
+
+  Reads BioSemi Data Format (bdf) files.
+  See https://www.biosemi.com/faq_file_format.htm for file format details.
+  ### Inputs:
+  * filename String
+  * header_only Bool=false
+  * channels Array Int/String
+  ### Outputs:
+  * BioSemiData struct with the following fields
+  * header BioSemiHeader
+  * data (samples * channels) Matrix
+  * time
+  * triggers BioSemiTriggers
+  * status Array
+  ### Examples:
+  ```julia
+  dat1 = read_bdf("filename1.bdf")
+  dat1 = read_bdf("filename1.bdf", header_only = true)
+  dat1 = read_bdf("filename1.bdf", channels = [1,3,5])
+  dat1 = read_bdf("filename1.bdf", channels = ["Fp1", "Cz"])
+  dat1 = read_bdf("filename1.bdf", channels = [-1])  # trigger channel only
+  ```
 """
 function read_bdf(filename::String; header_only::Bool=false, channels::Union{Array{Any},Array{Int},Array{String}}=[])
 
@@ -160,8 +160,9 @@ end
 
 """
 bdf2matrix(bdf, num_channels, channels, scale_factor, num_data_records, num_samples)
-Internal functon used within read_bdf to read BioSemi 24bit data representation
-into julia data array/matrix
+
+  Internal functon used within read_bdf to read BioSemi 24bit data representation
+  into julia data array/matrix
 """
 function bdf2matrix(bdf, num_channels, channels, scale_factor, num_data_records, num_samples, sample_rate)
 
@@ -204,8 +205,7 @@ end
 
 """
 triggerInfo(trig)
-Internal functon used within read_bdf to convert raw trigger line values to
-a summary of trigger information 
+  Internal functon used within read_bdf to convert raw trigger line values to a summary of trigger information 
 """
 function triggerInfo(trig_raw, sample_rate)
 
@@ -229,14 +229,15 @@ end
 
 """
 write_bdf(bdf_in::BioSemiData)
-Write BioSemiRaw structs to *.bdf file.
-See https://www.biosemi.com/faq_file_format.htm for file format details.
-### Inputs:
-* BioSemiData struct
-### Examples:
-```julia
-dat1 = read_bdf("filename1.bdf")
-write_bdf(dat1)
+
+  Write BioSemiRaw structs to *.bdf file.
+  See https://www.biosemi.com/faq_file_format.htm for file format details.
+  ### Inputs:
+  * BioSemiData struct
+  ### Examples:
+  ```julia
+  dat1 = read_bdf("filename1.bdf")
+  write_bdf(dat1)
 """
 function write_bdf(bdf_in::BioSemiData, filename::String="")
 
@@ -281,8 +282,9 @@ end
 
 """
 matrix2bdf(data, trigs, status, num_data_records, num_samples, num_channels)
-Internal functon used within write_bdf to write Julia BioSemiBDF data matrix
-to bdf 24bit file format.
+
+  Internal functon used within write_bdf to write Julia BioSemiBDF data matrix
+  to bdf 24bit file format.
 """
 function matrix2bdf(data, trigs, status, num_data_records, num_samples, num_channels)
 
@@ -316,15 +318,16 @@ end
 
 """
 merge_bdf(bdfs::Array{BioSemiData}, filename::String="merged.bdf")
-Merge BioSemiRaw structs to single BioSemiRaw struct. Checks that the
-input BioSemiRaw structs have the same number of channels, same channel
-labels and that each channel has the same sample rate.
-### Examples:
-```julia
-dat1 = read_bdf("filename1.bdf")
-dat2 = read_bdf("filename2.bdf")
-dat3 = merge_bdf([dat1, dat2])
-```
+
+  Merge BioSemiRaw structs to single BioSemiRaw struct. Checks that the
+  input BioSemiRaw structs have the same number of channels, same channel
+  labels and that each channel has the same sample rate.
+  ### Examples:
+  ```julia
+  dat1 = read_bdf("filename1.bdf")
+  dat2 = read_bdf("filename2.bdf")
+  dat3 = merge_bdf([dat1, dat2])
+  ```
 """
 function merge_bdf(bdfs::Array{BioSemiData})
 
@@ -362,42 +365,45 @@ end
 
 """
 delete_channels_bdf(bdf_in::BioSemiData, channels::Union{Array{Int}, Array{String}})
-Delete specific channels from BioSemiData struct. Channels can be specified
-using channel numbers or channel labels.
-### Examples:
-```julia
-dat1 = read_bdf("filename1.bdf")
-dat1 = delete_channels_bdf(dat, [1, 2])
-dat1 = delete_channels_bdf(dat, ["Fp1", "F1"])
-```
+
+  Delete specific channels from BioSemiData struct. Channels can be specified
+  using channel numbers or channel labels.
+  ### Examples:
+  ```julia
+  dat1 = read_bdf("filename1.bdf")
+  dat1 = delete_channels_bdf(dat, [1, 2])
+  dat1 = delete_channels_bdf(dat, ["Fp1", "F1"])
+  ```
 """
+
 function delete_channels_bdf(bdf_in::BioSemiData, channels::Union{Array{Int},Array{String}})
   bdf_out = deepcopy(bdf_in)
   channels = channel_idx(bdf_out.header.channel_labels, channels)
-  channels = filter(x -> !(x in channels), 1:length(bdf_in.header.channel_labels))
+  channels = filter(x -> !(x in channels[1:end-1]), 1:(length(bdf_in.header.channel_labels)))
   update_header_bdf!(bdf_out.header, channels)
-  bdf_out.data = bdf_out.data[channels[1:end-1], :]
+  bdf_out.data = bdf_out.data[:, channels[1:end-1]]
   return bdf_out
 end
 
 function delete_channels_bdf!(bdf::BioSemiData, channels::Union{Array{Int},Array{String}})
   channels = channel_idx(bdf.header.channel_labels, channels)
-  channels = filter(x -> !(x in channels), 1:length(bdf.header.channel_labels))
+  channels = filter(x -> !(x in channels[1:end-1]), 1:length(bdf.header.channel_labels))
   update_header_bdf!(bdf.header, channels)
-  bdf.data = bdf.data[channels[1:end-1], :]
+  bdf.data = bdf.data[:, channels[1:end-1]]
 end
 
 
 """
 select_channels_bdf(bdf_in::BioSemiData, channels::Union{Array{Int}, Array{String}})
-Select specific channels from BioSemiData struct. Channels can be specified
-using channel numbers or channel labels.
-### Examples:
-```julia
-dat1 = read_bdf("filename1.bdf")
-dat1 = select_channels_bdf(dat, [1, 2])
-dat1 = select_channels_bdf(dat, ["Fp1", "F1"])
-```
+
+  Select specific channels from BioSemiData struct. Channels can be specified
+  using channel numbers or channel labels.
+  ### Examples:
+  ```julia
+  dat1 = read_bdf("filename1.bdf")
+  dat1 = select_channels_bdf(dat, [1, 2])
+  dat1 = select_channels_bdf(dat, ["Fp1", "F1"])
+  ```
 """
 function select_channels_bdf(bdf_in::BioSemiData, channels::Union{Array{Int},Array{String}})
   bdf_out = deepcopy(bdf_in)
@@ -414,32 +420,44 @@ function select_channels_bdf!(bdf::BioSemiData, channels::Union{Array{Int},Array
 end
 
 
+function crop_check(crop_type::String, val::Array{Int}, triggers, num_data_records)
+  crop_type ∉ ["triggers", "records"] && error("crop_type not recognized!")
+  length(val) != 2 && error("val should be of length 2")
+  if crop_type == "triggers"
+    val[1] ∉ triggers && error("val[1] not available trigger")
+    val[2] ∉ triggers && error("val[2] not available trigger")
+  elseif crop_type == "records"
+    val[1] < 1 && error("val[1] less than 1")
+    val[2] > num_data_records && error("val[2] > number of data records")
+  end
+end
+
+
 """
 crop_bdf(bdf_in::BioSemiData, crop_type::tString, val::Array{Int}, filename::String)
-Recuce the length of the recorded data. The border upon which to crop the bdf file can be defined using either
-a start and end trigger ("triggers") or a start and end record ("records").
-### Examples:
-```julia
-dat1 = read_bdf("filename1.bdf")
-dat2 = crop_bdf(dat1, "triggers", [1 2])   # between first trigger 1 and last trigger 2
-dat3 = crop_bdf(dat1, "records",  [1 100]) # data records 1 to 100 inclusive
-```
+
+  Recuce the length of the recorded data. The border upon which to crop the bdf file can be defined using either
+  a start and end trigger ("triggers") or a start and end record ("records").
+  ### Examples:
+  ```julia
+  dat1 = read_bdf("filename1.bdf")
+  dat2 = crop_bdf(dat1, "triggers", [1 2])   # between first trigger 1 and last trigger 2
+  dat3 = crop_bdf(dat1, "records",  [1 100]) # data records 1 to 100 inclusive
+  ```
 """
 function crop_bdf(bdf_in::BioSemiData, crop_type::String, val::Array{Int})
 
-  length(val) != 2 && error("val should be of length 2")
+  crop_check(crop_type, val, bdf_in.triggers.count.keys, bdf_in.header.num_data_records)
 
   sample_rate = bdf_in.header.sample_rate[1]
-  nsamples = size(bdf_in.data, 2)
+  nsamples = size(bdf_in.data, 1)
 
-  idxStart, idxEnd, trigStart, trigEnd = find_crop_index(bdf_in.triggers, crop_type, val, sample_rate, nsamples)
+  idxStart, idxEnd = find_crop_index(bdf_in.triggers, crop_type, val, sample_rate, nsamples)
 
   # copy data and crop
   bdf_out = deepcopy(bdf_in)
   bdf_out.header.num_data_records = Int(((idxEnd - idxStart) + 1) / sample_rate)
-
   bdf_out.data = bdf_out.data[idxStart:idxEnd, :]
-
   bdf_out.time = time_range(bdf_out.header.sample_rate[1], bdf_out.header.num_data_records)
   bdf_out.status = bdf_out.status[idxStart:idxEnd]
 
@@ -453,30 +471,29 @@ end
 
 function crop_bdf!(bdf::BioSemiData, crop_type::String, val::Array{Int})
 
-  length(val) != 2 && error("val should be of length 2")
+  crop_check(crop_type, val, bdf.triggers.count.keys, bdf.header.num_data_records)
 
   sample_rate = bdf.header.sample_rate[1]
-  nsamples = size(bdf.data, 2)
+  nsamples = size(bdf.data, 1)
 
-  idxStart, idxEnd, trigStart, trigEnd = find_crop_index(bdf_in.triggers, crop_type, val, sample_rate, nsamples)
+  idxStart, idxEnd = find_crop_index(bdf.triggers, crop_type, val, sample_rate, nsamples)
 
   # crop
   bdf.header.num_data_records = Int(((idxEnd - idxStart) + 1) / sample_rate)
-
   bdf.data = bdf.data[idxStart:idxEnd, :]
-
-  bdf_out.time = time_range(bdf_out.header.sample_rate[1], bdf_out.header.num_data_records)
+  bdf.time = time_range(bdf.header.sample_rate[1], bdf.header.num_data_records)
   bdf.status = bdf.status[idxStart:idxEnd]
 
   # recaculate trigger information
-  trig = bdf_out.triggers.raw[idxStart:idxEnd]
-  bdf_out.triggers = triggerInfo(trig, bdf_out.header.sample_rate[1])
+  trig = bdf.triggers.raw[idxStart:idxEnd]
+  bdf.triggers = triggerInfo(trig, bdf.header.sample_rate[1])
 
 end
 
+
 function find_crop_index(triggers::BioSemiTriggers, crop_type::String, val::Array{Int}, sample_rate::Int, data_length::Int)
 
-  # find idxStart/End and trigStart/End
+  # find idxStart/idxEnd 
   if crop_type == "triggers"
 
     borders = 1:sample_rate:data_length
@@ -491,26 +508,23 @@ function find_crop_index(triggers::BioSemiTriggers, crop_type::String, val::Arra
 
     idxStart = ((val[1] - 1) * sample_rate) + 1
     idxEnd = (val[2] * sample_rate)
-    trigStart = findfirst(triggers.idx .>= idxStart)
-    trigEnd = findlast(triggers.idx .<= idxEnd)
 
-  else
-    error("crop_type not recognized!")
   end
 
-  return idxStart, idxEnd, trigStart, trigEnd
+  return idxStart, idxEnd
 
 end
 
 
 """
 downsample_bdf(bdf_in::BioSemiData, dec::Int)
-Reduce the sampling rate within a BioSemiData struct by an integer factor (dec).
-### Examples:
-```julia
-dat1 = read_bdf("filename1.bdf")
-dat2 = downsample_bdf(dat1, 2)
-```
+
+  Reduce the sampling rate within a BioSemiData struct by an integer factor (dec).
+  ### Examples:
+  ```julia
+  dat1 = read_bdf("filename1.bdf")
+  dat2 = downsample_bdf(dat1, 2)
+  ```
 """
 function downsample_bdf(bdf_in::BioSemiData, dec::Int)
 
@@ -570,8 +584,9 @@ end
 
 """
 update_header_bdf(hd::Dict, channels::Array{Int})
-Updates header Dict within BioSemiData struct following the selection
-of specific channels in read_bdf or select_channels_bdf.
+
+  Updates header Dict within BioSemiData struct following the selection
+  of specific channels in read_bdf or select_channels_bdf.
 """
 function update_header_bdf!(hd::BioSemiHeader, channels::Array{Int})
   hd.num_channels = length(channels)
@@ -593,7 +608,8 @@ end
 
 """
 channel_idx(labels::Array{AbstractString}, channels::Array{AbstractString})
-Return channel index given labels and desired selection.
+
+  Return channel index given labels and desired selection.
 """
 function channel_idx(labels, channels::Array{String})
   channels = [findfirst(x .== labels) for x in channels]
@@ -604,7 +620,8 @@ end
 
 """
 channel_idx(labels::Array{AbstractString}, channels::Array{Int})
-Return channel index given labels and desired selection.
+
+  Return channel index given labels and desired selection.
 """
 function channel_idx(labels, channels::Array{Int})
   trigSelected = findall(x -> x == -1, channels)
@@ -616,4 +633,8 @@ function channel_idx(labels, channels::Array{Int})
   return sort(unique(append!(channels, length(labels))))
 end
 
+channel_idx(labels, channels::Int) = channel_idx(labels, [channels])
+
 end
+
+
