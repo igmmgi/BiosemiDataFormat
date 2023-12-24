@@ -79,7 +79,6 @@ end
 
 """
 read_bdf(filename::String; header_only::Bool=false, channels::Union{Array{Any}, Array{Int}, Array{String}}}=[])
-
   Reads BioSemi Data Format (bdf) files.
   See https://www.biosemi.com/faq_file_format.htm for file format details.
   ### Inputs:
@@ -160,7 +159,6 @@ end
 
 """
 bdf2matrix(bdf, num_channels, channels, scale_factor, num_data_records, num_samples)
-
   Internal functon used within read_bdf to read BioSemi 24bit data representation
   into julia data array/matrix
 """
@@ -201,8 +199,6 @@ function bdf2matrix(bdf, num_channels, channels, scale_factor, num_data_records,
 end
 
 
-
-
 """
 triggerInfo(trig)
   Internal functon used within read_bdf to convert raw trigger line values to a summary of trigger information 
@@ -229,7 +225,6 @@ end
 
 """
 write_bdf(bdf_in::BioSemiData)
-
   Write BioSemiRaw structs to *.bdf file.
   See https://www.biosemi.com/faq_file_format.htm for file format details.
   ### Inputs:
@@ -282,7 +277,6 @@ end
 
 """
 matrix2bdf(data, trigs, status, num_data_records, num_samples, num_channels)
-
   Internal functon used within write_bdf to write Julia BioSemiBDF data matrix
   to bdf 24bit file format.
 """
@@ -318,7 +312,6 @@ end
 
 """
 merge_bdf(bdfs::Array{BioSemiData}, filename::String="merged.bdf")
-
   Merge BioSemiRaw structs to single BioSemiRaw struct. Checks that the
   input BioSemiRaw structs have the same number of channels, same channel
   labels and that each channel has the same sample rate.
@@ -333,11 +326,11 @@ function merge_bdf(bdfs::Array{BioSemiData})
 
   # check data structs to merge have same number of channels, channel labels + sample rate
   num_chans = (x -> x.header.num_channels).(bdfs)
-  !all(x -> x == num_chans[1], num_chans) && error("Different number of channels in bdf_in")
+  !all(x -> x == num_chans[1], num_chans) && error("1+ files have different number of channels!")
   chan_labels = (x -> x.header.channel_labels).(bdfs)
-  !all(y -> y == chan_labels[1], chan_labels) && error("Different channel labels bdf_in")
+  !all(y -> y == chan_labels[1], chan_labels) && error("1+ files have different channel labels!")
   sample_rate = (x -> x.header.sample_rate).(bdfs)
-  !all(y -> y == sample_rate[1], sample_rate) && error("Different sample rate in bdf_in")
+  !all(y -> y == sample_rate[1], sample_rate) && error("1+ files have different sample rates!")
 
   # make copy so that bdf_in is not altered
   bdf_out = deepcopy(bdfs[1])
@@ -365,7 +358,6 @@ end
 
 """
 delete_channels_bdf(bdf_in::BioSemiData, channels::Union{Array{Int}, Array{String}})
-
   Delete specific channels from BioSemiData struct. Channels can be specified
   using channel numbers or channel labels.
   ### Examples:
@@ -384,6 +376,7 @@ function delete_channels_bdf(bdf_in::BioSemiData, channels::Union{Array{Int},Arr
   bdf_out.data = bdf_out.data[:, channels[1:end-1]]
   return bdf_out
 end
+delete_channels_bdf(bdf_in::BioSemiData, channels::Union{Int,String}) = delete_channels_bdf(bdf_in, [channels])
 
 function delete_channels_bdf!(bdf::BioSemiData, channels::Union{Array{Int},Array{String}})
   channels = channel_idx(bdf.header.channel_labels, channels)
@@ -391,11 +384,10 @@ function delete_channels_bdf!(bdf::BioSemiData, channels::Union{Array{Int},Array
   update_header_bdf!(bdf.header, channels)
   bdf.data = bdf.data[:, channels[1:end-1]]
 end
-
+delete_channels_bdf!(bdf_in::BioSemiData, channels::Union{Int,String}) = delete_channels_bdf(bdf_in, [channels])
 
 """
 select_channels_bdf(bdf_in::BioSemiData, channels::Union{Array{Int}, Array{String}})
-
   Select specific channels from BioSemiData struct. Channels can be specified
   using channel numbers or channel labels.
   ### Examples:
@@ -412,30 +404,18 @@ function select_channels_bdf(bdf_in::BioSemiData, channels::Union{Array{Int},Arr
   bdf_out.data = bdf_out.data[:, channels[1:end-1]]
   return bdf_out
 end
+select_channels_bdf(bdf_in::BioSemiData, channels::Union{Int,String}) = select_channels_bdf(bdf_in, [channels])
 
 function select_channels_bdf!(bdf::BioSemiData, channels::Union{Array{Int},Array{String}})
   channels = channel_idx(bdf.header.channel_labels, channels)
   update_header_bdf!(bdf.header, channels)
   bdf.data = bdf.data[:, channels[1:end-1]]
 end
-
-
-function crop_check(crop_type::String, val::Array{Int}, triggers, num_data_records)
-  crop_type ∉ ["triggers", "records"] && error("crop_type not recognized!")
-  length(val) != 2 && error("val should be of length 2")
-  if crop_type == "triggers"
-    val[1] ∉ triggers && error("val[1] not available trigger")
-    val[2] ∉ triggers && error("val[2] not available trigger")
-  elseif crop_type == "records"
-    val[1] < 1 && error("val[1] less than 1")
-    val[2] > num_data_records && error("val[2] > number of data records")
-  end
-end
+select_channels_bdf!(bdf_in::BioSemiData, channels::Union{Int,String}) = select_channels_bdf(bdf_in, [channels])
 
 
 """
 crop_bdf(bdf_in::BioSemiData, crop_type::tString, val::Array{Int}, filename::String)
-
   Recuce the length of the recorded data. The border upon which to crop the bdf file can be defined using either
   a start and end trigger ("triggers") or a start and end record ("records").
   ### Examples:
@@ -490,6 +470,17 @@ function crop_bdf!(bdf::BioSemiData, crop_type::String, val::Array{Int})
 
 end
 
+function crop_check(crop_type::String, val::Array{Int}, triggers, num_data_records)
+  crop_type ∉ ["triggers", "records"] && error("crop_type not recognized!")
+  length(val) != 2 && error("val should be of length 2!")
+  if crop_type == "triggers"
+    val[1] ∉ triggers && error("val[1] not available trigger!")
+    val[2] ∉ triggers && error("val[2] not available trigger!")
+  elseif crop_type == "records"
+    val[1] < 1 && error("val[1] less than 1")
+    val[2] > num_data_records && error("val[2] > number of data records!")
+  end
+end
 
 function find_crop_index(triggers::BioSemiTriggers, crop_type::String, val::Array{Int}, sample_rate::Int, data_length::Int)
 
@@ -518,7 +509,6 @@ end
 
 """
 downsample_bdf(bdf_in::BioSemiData, dec::Int)
-
   Reduce the sampling rate within a BioSemiData struct by an integer factor (dec).
   ### Examples:
   ```julia
@@ -584,7 +574,6 @@ end
 
 """
 update_header_bdf(hd::Dict, channels::Array{Int})
-
   Updates header Dict within BioSemiData struct following the selection
   of specific channels in read_bdf or select_channels_bdf.
 """
@@ -608,19 +597,18 @@ end
 
 """
 channel_idx(labels::Array{AbstractString}, channels::Array{AbstractString})
-
   Return channel index given labels and desired selection.
 """
 function channel_idx(labels, channels::Array{String})
   channels = [findfirst(x .== labels) for x in channels]
-  any(channels .=== nothing) && error("A requested channel label is not in the bdf file!")
+  any(channels .=== nothing) && error("Requested channel label is not in the bdf file!")
   return sort(unique(append!(channels, length(labels))))
 end
+channel_idx(labels, channels::String) = channel_idx(labels, [channels])
 
 
 """
 channel_idx(labels::Array{AbstractString}, channels::Array{Int})
-
   Return channel index given labels and desired selection.
 """
 function channel_idx(labels, channels::Array{Int})
@@ -628,13 +616,11 @@ function channel_idx(labels, channels::Array{Int})
   if length(trigSelected) > 0
     channels[trigSelected] = repeat([length(labels)], length(trigSelected))
   end
-  any(channels .> length(labels)) && error("A requested channel number greater than number of channels in file!")
-  any(channels .< 1) && error("A requested channel number less than 1!")
+  any(channels .> length(labels)) && error("Requested channel number greater than number of channels in file!")
+  any(channels .< 1) && error("Requested channel number less than 1!")
   return sort(unique(append!(channels, length(labels))))
 end
-
 channel_idx(labels, channels::Int) = channel_idx(labels, [channels])
 
 end
-
 

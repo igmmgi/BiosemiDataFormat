@@ -170,6 +170,18 @@ end
   dat = delete_channels_bdf(dat, [1])
   @test isequal(dat.header.num_channels, 16)
 
+  bdf_file = joinpath(dirname(@__FILE__), "Newtest17-256.bdf")
+  dat = read_bdf(bdf_file)
+  @test isequal(dat.header.num_channels, 17)
+  dat = delete_channels_bdf(dat, 1)
+  @test isequal(dat.header.num_channels, 16)
+
+  bdf_file = joinpath(dirname(@__FILE__), "Newtest17-2048.bdf")
+  dat = read_bdf(bdf_file)
+  @test isequal(dat.header.num_channels, 17)
+  dat = delete_channels_bdf(dat, 1)
+  @test isequal(dat.header.num_channels, 16)
+
 end
 
 @testset "merge_bdf" begin
@@ -289,6 +301,12 @@ end
 
   x = BioSemiBDF.channel_idx(["A1", "A2", "A3"], ["A1", "A3"])
   @test isequal(x, [1, 3])
+
+  x = BioSemiBDF.channel_idx(["A1", "A2", "A3"], "A1")
+  @test isequal(x, [1, 3])
+
+  x = BioSemiBDF.channel_idx(["A1", "A2", "A3"], "A3")
+  @test isequal(x, [3])
 
   x = BioSemiBDF.channel_idx(["A1", "A2", "A3", "A4"], ["A1", "A4"])
   @test isequal(x, [1, 4])
