@@ -297,35 +297,35 @@ end
 
 end
 
-@testset "channel_idx" begin
+@testset "channel_index" begin
 
-  x = BioSemiBDF.channel_idx(["A1", "A2", "A3"], ["A1", "A3"])
+  x = BioSemiBDF.channel_index(["A1", "A2", "A3"], ["A1", "A3"])
   @test isequal(x, [1, 3])
 
-  x = BioSemiBDF.channel_idx(["A1", "A2", "A3"], "A1")
+  x = BioSemiBDF.channel_index(["A1", "A2", "A3"], "A1")
   @test isequal(x, [1, 3])
 
-  x = BioSemiBDF.channel_idx(["A1", "A2", "A3"], "A3")
+  x = BioSemiBDF.channel_index(["A1", "A2", "A3"], "A3")
   @test isequal(x, [3])
 
-  x = BioSemiBDF.channel_idx(["A1", "A2", "A3", "A4"], ["A1", "A4"])
+  x = BioSemiBDF.channel_index(["A1", "A2", "A3", "A4"], ["A1", "A4"])
   @test isequal(x, [1, 4])
 
-  x = BioSemiBDF.channel_idx(["A1", "A2", "A3", "A4"], ["A1", "A4", "A4"])
+  x = BioSemiBDF.channel_index(["A1", "A2", "A3", "A4"], ["A1", "A4", "A4"])
   @test isequal(x, [1, 4])
 
-  @test_throws(ErrorException, BioSemiBDF.channel_idx(["A1"], ["zzz"]))
+  @test_throws(ErrorException, BioSemiBDF.channel_index(["A1"], ["zzz"]))
 
-  x = BioSemiBDF.channel_idx(["A1", "A2", "A3"], [1, 3])
+  x = BioSemiBDF.channel_index(["A1", "A2", "A3"], [1, 3])
   @test isequal(x, [1, 3])
 
-  x = BioSemiBDF.channel_idx(["A1", "A2", "A3", "A4"], [1, 4])
+  x = BioSemiBDF.channel_index(["A1", "A2", "A3", "A4"], [1, 4])
   @test isequal(x, [1, 4])
 
-  x = BioSemiBDF.channel_idx(["A1", "A2", "A3", "A4"], [1, 4, 4])
+  x = BioSemiBDF.channel_index(["A1", "A2", "A3", "A4"], [1, 4, 4])
   @test isequal(x, [1, 4])
 
-  @test_throws(ErrorException, BioSemiBDF.channel_idx(["A1"], [2]))
-  @test_throws(ErrorException, BioSemiBDF.channel_idx(["A1"], [1, 2]))
+  @test_throws(ErrorException, BioSemiBDF.channel_index(["A1"], [2]))
+  @test_throws(ErrorException, BioSemiBDF.channel_index(["A1"], [1, 2]))
 
 end
