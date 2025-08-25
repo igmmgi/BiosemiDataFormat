@@ -1,4 +1,4 @@
-# BioSemiBDF
+# BiosemiDataFormat
 
 Julia code for BioSemi 24 bit EEG files. The code can be used for:
 
@@ -12,8 +12,8 @@ Julia code for BioSemi 24 bit EEG files. The code can be used for:
 
 ```julia
 ] # julia pkg manager
-add https://github.com/igmmgi/BioSemiBDF.git # install from  GitHub
-test BioSemiBDF # optional
+add https://github.com/igmmgi/BiosemiDataFormat.git # install from  GitHub
+test BiosemiDataFormat # optional
 ```
 
 ## Functions
@@ -28,7 +28,7 @@ test BioSemiBDF # optional
 ## Basic Example
 
 ```julia
-using BioSemiBDF
+using BiosemiDataFormat
 
 dat1 = read_bdf("filename1.bdf")
 dat2 = read_bdf("filename2.bdf")
