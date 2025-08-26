@@ -17,7 +17,8 @@ makedocs(
     "Home" => "index.md",
     "API Reference" => "api.md",
   ],
-  repo="https://github.com/igmmgi/BiosemiDataFormat.jl",
+  repo="github.com/igmmgi/BiosemiDataFormat.jl",
+  devbranch="master",
   doctest=true,
   checkdocs=:exports,
 )
