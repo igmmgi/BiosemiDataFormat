@@ -10,7 +10,7 @@ makedocs(
     format = Documenter.HTML(
         prettyurls = get(ENV, "CI", nothing) == "true",
         edit_link = :commit,
-        repolink = "https://github.com/igmmgi/BiosemiDataFormat",
+        repolink = "https://github.com/igmmgi/BiosemiDataFormat.jl",
         assets = String[],
     ),
     modules = [BiosemiDataFormat],
@@ -18,7 +18,7 @@ makedocs(
         "Home" => "index.md",
         "API Reference" => "api.md",
     ],
-    repo = "github.com/igmmgi/BiosemiDataFormat.git",
+    repo = "github.com/igmmgi/BiosemiDataFormat.jl.git",
     doctest = true,
     checkdocs = :exports,
 )
