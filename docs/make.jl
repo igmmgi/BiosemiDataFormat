@@ -22,10 +22,3 @@ makedocs(
     doctest = true,
     checkdocs = :exports,
 )
-
-# Deploy to GitHub Pages
-deploydocs(
-    repo = "github.com/igmmgi/BiosemiDataFormat.git",
-    target = "build",
-    push_preview =  true,
-)
