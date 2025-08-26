@@ -11,7 +11,6 @@ makedocs(
         prettyurls = get(ENV, "CI", nothing) == "true",
         edit_link = :commit,
         repolink = "https://github.com/igmmgi/BiosemiDataFormat",
-        collapselevel = 1,
         assets = String[],
     ),
     modules = [BiosemiDataFormat],
@@ -22,4 +21,11 @@ makedocs(
     repo = "github.com/igmmgi/BiosemiDataFormat.jl.git",
     doctest = true,
     checkdocs = :exports,
+)
+
+# Deploy to GitHub Pages
+deploydocs(
+    repo = "github.com/igmmgi/BiosemiDataFormat.jl.git",
+    target = "build",
+    push_preview = true,
 )
