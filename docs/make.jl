@@ -10,7 +10,7 @@ makedocs(
   format=Documenter.HTML(
     prettyurls=get(ENV, "CI", nothing) == "true",
     edit_link=:commit,
-    devbranch="master",
+    repolink="https://github.com/igmmgi/BiosemiDataFormat.jl",
     assets=String[],
   ),
   modules=[BiosemiDataFormat],
