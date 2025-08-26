@@ -1,8 +1,7 @@
 # BiosemiDataFormat
 
-[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://igmmgi.github.io/BiosemiDataFormat.jl/)
-[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://igmmgi.github.io/BiosemiDataFormat.jl/dev/)
-[![Build Status](https://github.com/igmmgi/BiosemiDataFormat.jl/workflows/Documentation/badge.svg)](https://github.com/igmmgi/BiosemiDataFormat.jl/actions)
+[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://igmmgi.github.io/BiosemiDataFormat/)
+[![Build Status](https://github.com/igmmgi/BiosemiDataFormat/workflows/Documentation/badge.svg)](https://github.com/igmmgi/BiosemiDataFormat/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 Julia code for BioSemi 24 bit EEG files. The code can be used for:

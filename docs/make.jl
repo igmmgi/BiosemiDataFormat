@@ -18,14 +18,14 @@ makedocs(
         "Home" => "index.md",
         "API Reference" => "api.md",
     ],
-    repo = "github.com/igmmgi/BiosemiDataFormat.jl.git",
+    repo = "github.com/igmmgi/BiosemiDataFormat.git",
     doctest = true,
     checkdocs = :exports,
 )
 
 # Deploy to GitHub Pages
 deploydocs(
-    repo = "github.com/igmmgi/BiosemiDataFormat.jl.git",
+    repo = "github.com/igmmgi/BiosemiDataFormat.git",
     target = "build",
     push_preview = true,
 )
