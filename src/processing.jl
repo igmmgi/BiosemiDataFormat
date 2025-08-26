@@ -107,32 +107,29 @@ Reduce the sampling rate of BDF data by an integer factor (in-place).
 # Returns
 - `Nothing`: Modifies `bdf` in-place
 
-# Downsampling Process
-- Applies anti-aliasing filter using DSP.resample
-- Reduces data length by factor `dec`
-- Updates header information (sample_rate, num_samples)
-- Recalculates time vector
-- Adjusts trigger indices to new sampling rate
-
 # Examples
 ```julia
-# Downsample by factor of 2 (256 Hz → 128 Hz)
+# Downsample by factor of 2
 downsample_bdf!(dat, 2)
 
-# Downsample by factor of 4 (2048 Hz → 512 Hz)
+# Downsample by factor of 4
 downsample_bdf!(dat, 4)
+
+# Check the new sampling rate
+println("Original sampling rate: ", dat.header.sample_rate[1], " Hz")
 ```
 
 # Notes
-- `dec` must be a power of 2 (2, 4, 8, 16, ...)
-- Uses padding to handle edge effects
-- Trigger timing is automatically adjusted
 - Modifies the original data structure
-- Use `downsample_bdf` for non-mutating version
+- Applies anti-aliasing filter using DSP.resample
+- Reduces data length by factor `dec`
+- Updates header information (sample_rate, num_samples)
+- Recalculates time vector and trigger information
+- Downsampling factor must be a power of 2
 
 # See also
 - `downsample_bdf`: Non-mutating version
-- `crop_bdf!`: Reduce data length
+- `crop_bdf`: Reduce data length
 - `merge_bdf`: Combine multiple files
 """
 function downsample_bdf!(bdf::BiosemiData, dec::Int)
@@ -207,50 +204,47 @@ end
 """
     merge_bdf(bdfs)
 
-Merge multiple BioSemi BDF data structures into a single structure.
+Merge multiple BDF data structures into a single file.
 
 # Arguments
-- `bdfs::Vector{BiosemiData}`: Vector of BDF data structures to merge
+- `bdfs::Array{BiosemiData}`: Array of BDF data structures to merge
 
 # Returns
 - `BiosemiData`: Merged data structure
 
 # Requirements
-All input structures must have:
-- Same number of channels
-- Same channel labels
-- Same sampling rate
-
-# Merging Process
-- Data records are concatenated in order
-- Trigger information is recomputed from merged data
-- Time vector is recalculated for the full duration
-- Header information is updated with new record count
+- All files must have the same number of channels
+- All files must have identical channel labels
+- All files must have the same sampling rate
 
 # Examples
 ```julia
-# Merge two files
-dat1 = read_bdf("file1.bdf")
-dat2 = read_bdf("file2.bdf")
-merged = merge_bdf([dat1, dat2])
+# Merge two BDF files
+file1 = "session1.bdf"
+file2 = "session2.bdf"
+
+dat1 = read_bdf(file1)
+dat2 = read_bdf(file2)
+
+dat_merged = merge_bdf([dat1, dat2])
 
 # Merge multiple files
-files = ["file1.bdf", "file2.bdf", "file3.bdf"]
-data = [read_bdf(f) for f in files]
-merged = merge_bdf(data)
+files = ["session1.bdf", "session2.bdf", "session3.bdf"]
+data_arrays = [read_bdf(f) for f in files]
+dat_merged = merge_bdf(data_arrays)
 ```
 
 # Notes
-- Files are merged in the order they appear in the vector
-- Total duration = sum of individual file durations
-- Trigger counts are recalculated from the merged data
-- Original data structures are not modified
-- Useful for combining recordings from the same session
+- Files are concatenated in the order provided
+- Header information is taken from the first file
+- Trigger information is recalculated for the merged data
+- Time vector is updated to reflect the total duration
+- Original files are not modified
 
 # See also
 - `read_bdf`: Read individual BDF files
-- `write_bdf`: Write merged data to file
-- `crop_bdf`: Reduce length of merged data if needed
+- `crop_bdf`: Reduce data length
+- `select_channels_bdf`: Select specific channels
 """
 function merge_bdf(bdfs::Array{BiosemiData})
 

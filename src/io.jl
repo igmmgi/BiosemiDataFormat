@@ -148,29 +148,47 @@ The header includes:
 # Write to specified filename
 write_bdf(dat, "output.bdf")
 
-# Write using filename from data structure
-dat.filename = "processed.bdf"
+
+
+# Arguments
+- `bdf_in::BiosemiData`: Data structure to write
+- `filename::String=""`: Output filename (uses original filename if empty)
+
+# Returns
+- `Nothing`: Writes file to disk
+
+# Examples
+```julia
+# Write to a new file
+write_bdf(dat, "processed_data.bdf")
+
+# Write using original filename
+dat.filename = "my_data.bdf"
 write_bdf(dat)
+
+# Write processed data
+dat_cropped = crop_bdf(dat, "triggers", [100, 200])
+write_bdf(dat_cropped, "cropped_data.bdf")
 ```
 
 # Notes
-- Automatically converts data back to 24-bit BDF format
-- Applies inverse scaling to restore original digital values
-- Preserves all header metadata and channel information
-- File format follows [BioSemi BDF specification](https://www.biosemi.com/faq_file_format.htm)
+- Creates a new BDF file in standard BioSemi format
+- Automatically applies scale factors and converts to 24-bit format
+- Preserves all header information and metadata
+- If no filename is provided, uses the filename stored in the data structure
 - Overwrites existing files without warning
 
 # See also
 - `read_bdf`: Read BDF files
-- `crop_bdf`: Reduce data length before writing
-- `downsample_bdf`: Reduce sampling rate before writing
+- `crop_bdf`: Reduce data before writing
+- `select_channels_bdf`: Select channels before writing
 """
 function write_bdf(bdf_in::BiosemiData, filename::String="")
 
-  if isempty(filename) 
+  if isempty(filename)
     filename = bdf_in.filename
   end
-  fid = open(filename, "w") 
+  fid = open(filename, "w")
 
   write(fid, 0xff)
   [write(fid, UInt8(i)) for i in bdf_in.header.id2]

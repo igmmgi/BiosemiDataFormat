@@ -8,8 +8,8 @@ BioSemi BDF (BioSemi Data Format) files store 24-bit EEG data with metadata incl
 
 ## Features
 
-- **File I/O**: Read and write BDF files
-- **Data Processing**: Crop, downsample, and merge data
+- **File I/O**: Read and write Biosemi (\*.bdf) files
+- **Basic Data Processing**: Crop, downsample, and merge data
 - **Channel Management**: Select, delete, and manipulate channels
 - **Trigger Analysis**: Extract and analyze trigger events
 - **Status Channel**: Handle BioSemi status channel information
@@ -26,7 +26,7 @@ dat = read_bdf("eeg_data.bdf")
 dat_selected = select_channels_bdf(dat, ["Fp1", "Cz", "O1"])
 
 # Crop data to specific time range
-dat_cropped = crop_bdf(dat, "triggers", [100, 200])
+dat_cropped = crop_bdf(dat, "triggers", [100, 500])
 
 # Downsample data
 dat_downsampled = downsample_bdf(dat, 2)
@@ -45,4 +45,3 @@ Pkg.add("BiosemiDataFormat")
 ## Documentation
 
 - [API Reference](@ref)
-- [Examples](@ref)

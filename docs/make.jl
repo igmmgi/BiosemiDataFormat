@@ -9,15 +9,15 @@ makedocs(
     sitename = "BiosemiDataFormat",
     format = Documenter.HTML(
         prettyurls = get(ENV, "CI", nothing) == "true",
-        canonical = "https://igmmgi.github.io/BiosemiDataFormat.jl/",
         edit_link = :commit,
+        repolink = "https://github.com/igmmgi/BiosemiDataFormat",
+        collapselevel = 2,
         assets = String[],
     ),
     modules = [BiosemiDataFormat],
     pages = [
         "Home" => "index.md",
         "API Reference" => "api.md",
-        "Examples" => "examples.md",
     ],
     repo = "github.com/igmmgi/BiosemiDataFormat.jl.git",
     doctest = true,

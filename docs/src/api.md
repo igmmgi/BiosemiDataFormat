@@ -20,14 +20,12 @@ BiosemiDataFormat.BiosemiData
 
 ```@docs
 BiosemiDataFormat.read_bdf
-BiosemiDataFormat.bdf2matrix
 ```
 
 ### Writing BDF Files
 
 ```@docs
 BiosemiDataFormat.write_bdf
-BiosemiDataFormat.matrix2bdf
 ```
 
 ## Data Processing Functions
@@ -74,5 +72,4 @@ BiosemiDataFormat.delete_channels_bdf!
 
 ```@docs
 BiosemiDataFormat.channel_index
-BiosemiDataFormat.update_header_bdf!
 ```
