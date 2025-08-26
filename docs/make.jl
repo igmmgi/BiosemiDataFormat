@@ -11,7 +11,7 @@ makedocs(
         prettyurls = get(ENV, "CI", nothing) == "true",
         edit_link = :commit,
         repolink = "https://github.com/igmmgi/BiosemiDataFormat",
-        collapselevel = 2,
+        collapselevel = 1,
         assets = String[],
     ),
     modules = [BiosemiDataFormat],
