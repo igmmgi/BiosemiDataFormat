@@ -1,6 +1,6 @@
 # BiosemiDataFormat
 
-[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://igmmgi.github.io/BiosemiDataFormat/)
+[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://igmmgi.github.io/BiosemiDataFormat.jl/)
 [![Build Status](https://github.com/igmmgi/BiosemiDataFormat/workflows/Documentation/badge.svg)](https://github.com/igmmgi/BiosemiDataFormat/actions)
 [![CI](https://github.com/igmmgi/BiosemiDataFormat/workflows/Tests/badge.svg)](https://github.com/igmmgi/BiosemiDataFormat/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)

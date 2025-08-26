@@ -2,8 +2,6 @@
 
 A Julia package for reading, writing, and processing BioSemi 24-bit EEG data files (BDF format).
 
-<!-- Test deployment -->
-
 ## Overview
 
 BioSemi BDF (BioSemi Data Format) files store 24-bit EEG data with metadata including channel information, sampling rates, and trigger events. This package provides comprehensive functionality to work with these files in Julia.
