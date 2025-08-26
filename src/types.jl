@@ -99,7 +99,7 @@ Data structure containing trigger and status channel information.
 # Notes
 - `raw` contains trigger values for every sample (0 for no trigger)
 - `idx` contains sample indices where trigger values change
-- `time` matrix has columns: [trigger_value, time_since_previous_trigger]
+- `time` matrix has columns: trigger_value, time_since_previous_trigger
 """
 mutable struct BiosemiTriggers
   raw::Vector{Int16}

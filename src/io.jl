@@ -148,8 +148,6 @@ The header includes:
 # Write to specified filename
 write_bdf(dat, "output.bdf")
 
-
-
 # Arguments
 - `bdf_in::BiosemiData`: Data structure to write
 - `filename::String=""`: Output filename (uses original filename if empty)
